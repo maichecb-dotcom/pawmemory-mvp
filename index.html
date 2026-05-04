@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PawMemory MVP</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="主导航">
+        <div class="brand">
+          <div class="brand-mark">PM</div>
+          <div>
+            <strong>PawMemory</strong>
+            <span>宠物记忆陪伴</span>
+          </div>
+        </div>
+
+        <nav class="nav-list">
+          <button class="nav-item active" data-view="home">首页</button>
+          <button class="nav-item" data-view="profile">宠物画像</button>
+          <button class="nav-item" data-view="memories">记忆</button>
+          <button class="nav-item" data-view="chat">AI 陪伴</button>
+          <button class="nav-item" data-view="album">相册</button>
+        </nav>
+
+        <div class="sidebar-note">
+          <span>演示版</span>
+          <p>当前数据保存在本机浏览器，适合验证第一版体验。</p>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">MVP Prototype</p>
+            <h1 id="pageTitle">今天也想起它</h1>
+          </div>
+          <button class="ghost-button" id="resetDemo" type="button">重置演示数据</button>
+        </header>
+
+        <section class="view active" id="homeView" aria-label="首页">
+          <div class="hero-grid">
+            <article class="pet-hero">
+              <img id="homePetPhoto" src="assets/momo.png" alt="宠物照片" />
+              <div class="pet-hero-overlay">
+                <span id="homeSpecies">Dog</span>
+                <h2 id="homePetName">Momo</h2>
+                <p id="homePetLine">温柔、爱晒太阳、听见钥匙声会跑到门口。</p>
+              </div>
+            </article>
+
+            <section class="daily-panel">
+              <p class="eyebrow">今日陪伴</p>
+              <h2 id="dailyGreeting">晚上好，Momo 在这里。</h2>
+              <p id="dailyMemory">还记得它最喜欢趴在窗边，阳光落在耳朵上的样子。</p>
+              <div class="status-row" id="traitChips"></div>
+              <button class="primary-button" data-jump="chat" type="button">和它说说话</button>
+            </section>
+          </div>
+
+          <div class="metrics-grid">
+            <article class="metric">
+              <span id="memoryCount">0</span>
+              <p>已保存记忆</p>
+            </article>
+            <article class="metric">
+              <span id="photoCount">0</span>
+              <p>相册照片</p>
+            </article>
+            <article class="metric">
+              <span id="habitCount">0</span>
+              <p>行为习惯</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="profileView" aria-label="宠物画像">
+          <div class="split-layout">
+            <form class="panel form-panel" id="profileForm">
+              <div class="section-heading">
+                <p class="eyebrow">Pet Profile</p>
+                <h2>建立它的画像</h2>
+              </div>
+
+              <label>
+                宠物名字
+                <input name="name" type="text" required />
+              </label>
+              <label>
+                物种 / 品种
+                <input name="species" type="text" required />
+              </label>
+              <label>
+                上传照片
+                <input name="photo" type="file" accept="image/*" />
+              </label>
+              <label>
+                性格标签，用逗号分隔
+                <input name="traits" type="text" placeholder="温柔, 粘人, 爱晒太阳" />
+              </label>
+              <label>
+                常见习惯
+                <textarea name="habits" rows="4" placeholder="例如：听见钥匙声会跑到门口，睡前会趴在床边。"></textarea>
+              </label>
+              <label>
+                喜欢的东西
+                <textarea name="likes" rows="3" placeholder="例如：小黄球、晒太阳、被摸下巴。"></textarea>
+              </label>
+              <label>
+                害怕或不喜欢
+                <textarea name="dislikes" rows="3" placeholder="例如：吹风机、陌生人、大雨声。"></textarea>
+              </label>
+              <label>
+                如果它能表达，会是什么语气？
+                <textarea name="voice" rows="3" placeholder="例如：短句、撒娇、安静陪伴，不会说太复杂的话。"></textarea>
+              </label>
+              <button class="primary-button" type="submit">保存宠物画像</button>
+            </form>
+
+            <aside class="profile-preview panel">
+              <img id="profilePhoto" src="assets/momo.png" alt="宠物头像预览" />
+              <h2 id="profileName">Momo</h2>
+              <p id="profileSpecies">Golden Retriever</p>
+              <div class="status-row" id="profileTraits"></div>
+              <div class="mini-list">
+                <h3>互动依据</h3>
+                <p id="profileSummary">AI 回应会参考这里保存的性格、习惯和记忆。</p>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" id="memoriesView" aria-label="记忆">
+          <div class="split-layout">
+            <form class="panel form-panel" id="memoryForm">
+              <div class="section-heading">
+                <p class="eyebrow">Memory</p>
+                <h2>记录一个关于它的瞬间</h2>
+              </div>
+              <label>
+                标题
+                <input name="title" type="text" required placeholder="窗边晒太阳" />
+              </label>
+              <label>
+                日期
+                <input name="date" type="date" required />
+              </label>
+              <label>
+                类型
+                <select name="type">
+                  <option>日常</option>
+                  <option>照片</option>
+                  <option>声音</option>
+                  <option>视频</option>
+                  <option>纪念日</option>
+                </select>
+              </label>
+              <label>
+                记忆内容
+                <textarea name="body" rows="5" required placeholder="写下它当时的动作、声音、表情，越具体越像。"></textarea>
+              </label>
+              <button class="primary-button" type="submit">保存记忆</button>
+            </form>
+
+            <div class="timeline" id="memoryList"></div>
+          </div>
+        </section>
+
+        <section class="view" id="chatView" aria-label="AI 陪伴">
+          <div class="chat-layout">
+            <aside class="panel companion-card">
+              <img id="chatPetPhoto" src="assets/momo.png" alt="宠物头像" />
+              <h2 id="chatPetName">Momo</h2>
+              <p id="chatHint">它会根据画像和记忆，用温柔的方式回应你。</p>
+            </aside>
+
+            <section class="panel chat-panel">
+              <div class="chat-stream" id="chatStream"></div>
+              <form class="chat-composer" id="chatForm">
+                <input name="message" type="text" autocomplete="off" placeholder="对它说点什么..." required />
+                <button class="primary-button" type="submit">发送</button>
+              </form>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="albumView" aria-label="相册">
+          <div class="album-header">
+            <div>
+              <p class="eyebrow">Album</p>
+              <h2>它留在生活里的小证据</h2>
+            </div>
+            <label class="upload-button">
+              添加照片
+              <input id="albumUpload" type="file" accept="image/*" multiple />
+            </label>
+          </div>
+          <div class="album-grid" id="albumGrid"></div>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
