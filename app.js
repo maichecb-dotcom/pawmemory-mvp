@@ -41,11 +41,13 @@ const defaultState = {
   ],
   chat: [
     {
+      id: crypto.randomUUID(),
       role: "pet",
       text: "我在这里。今天可以慢慢说，不用急。",
       time: "刚刚",
     },
   ],
+  feedback: {},
 };
 
 let state = loadState();
@@ -60,7 +62,7 @@ function loadState() {
 
   try {
     const parsed = JSON.parse(saved);
-    return {
+    const stateWithDefaults = {
       ...structuredClone(defaultState),
       ...parsed,
       pet: {
@@ -68,6 +70,12 @@ function loadState() {
         ...(parsed.pet || {}),
       },
     };
+    stateWithDefaults.chat = (stateWithDefaults.chat || []).map((message) => ({
+      id: message.id || crypto.randomUUID(),
+      ...message,
+    }));
+    stateWithDefaults.feedback = stateWithDefaults.feedback || {};
+    return stateWithDefaults;
   } catch {
     return structuredClone(defaultState);
   }
@@ -205,14 +213,43 @@ function renderChat() {
   stream.innerHTML = "";
   chat.forEach((message) => {
     const bubble = document.createElement("div");
-    bubble.className = `chat-message ${message.role === "user" ? "user" : "pet"}`;
+    bubble.className = `chat-message ${message.role === "user" ? "user" : "pet"} ${message.pending ? "pending" : ""}`;
     bubble.innerHTML = `
       <small>${message.role === "user" ? "你" : pet.name} · ${escapeHtml(message.time)}</small>
       ${escapeHtml(message.text)}
+      ${message.role === "pet" && !message.pending ? renderFeedbackControls(message) : ""}
     `;
     stream.appendChild(bubble);
   });
   stream.scrollTop = stream.scrollHeight;
+}
+
+function renderFeedbackControls(message) {
+  const selected = state.feedback[message.id];
+  const options = [
+    ["comfort", "舒服"],
+    ["unlike", "不像它"],
+    ["human", "太像人"],
+  ];
+
+  return `
+    <div class="feedback-row" aria-label="回复反馈">
+      ${options
+        .map(
+          ([value, label]) => `
+            <button
+              class="feedback-button ${selected === value ? "selected" : ""}"
+              data-feedback-message="${message.id}"
+              data-feedback-value="${value}"
+              type="button"
+            >
+              ${label}
+            </button>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
 }
 
 function setChatComposerLoading(isLoading) {
@@ -222,6 +259,32 @@ function setChatComposerLoading(isLoading) {
   const button = form.querySelector("button");
   button.disabled = isLoading;
   button.textContent = isLoading ? "回应中" : "发送";
+}
+
+function addPendingReply() {
+  const pendingMessage = {
+    id: crypto.randomUUID(),
+    role: "pet",
+    text: `${state.pet.name} 正在想你说的话...`,
+    time: "现在",
+    pending: true,
+  };
+  state.chat.push(pendingMessage);
+  renderChat();
+  return pendingMessage.id;
+}
+
+function replacePendingReply(pendingId, reply) {
+  state.chat = state.chat.map((message) =>
+    message.id === pendingId
+      ? {
+          id: crypto.randomUUID(),
+          role: "pet",
+          text: reply,
+          time: getTimeLabel(),
+        }
+      : message,
+  );
 }
 
 function renderAlbum() {
@@ -506,18 +569,15 @@ function bindEvents() {
     const text = fields.message.value.trim();
     if (!text) return;
 
-    state.chat.push({ role: "user", text, time: getTimeLabel() });
+    state.chat.push({ id: crypto.randomUUID(), role: "user", text, time: getTimeLabel() });
     renderChat();
     form.reset();
     setChatComposerLoading(true);
+    const pendingId = addPendingReply();
 
     const { reply, source } = await getCompanionReply(text);
 
-    state.chat.push({
-      role: "pet",
-      text: reply,
-      time: getTimeLabel(),
-    });
+    replacePendingReply(pendingId, reply);
     saveState();
     renderChat();
     setChatComposerLoading(false);
@@ -529,6 +589,18 @@ function bindEvents() {
     if (source === "local") {
       showToast("本地预览使用模拟回应，线上部署后可用真实 AI");
     }
+  });
+
+  $("#chatStream").addEventListener("click", (event) => {
+    const feedbackButton = event.target.closest("[data-feedback-message]");
+    if (!feedbackButton) return;
+
+    const messageId = feedbackButton.dataset.feedbackMessage;
+    const feedbackValue = feedbackButton.dataset.feedbackValue;
+    state.feedback[messageId] = feedbackValue;
+    saveState();
+    renderChat();
+    showToast("已记录反馈");
   });
 
   $("#albumUpload").addEventListener("change", async (event) => {

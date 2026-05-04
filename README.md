@@ -25,6 +25,8 @@ https://unrivaled-licorice-4881b7.netlify.app/
 - 记忆编辑与删除
 - 纪念资料 JSON 导出
 - 隐私说明与情绪边界页面
+- AI 回复生成中状态
+- AI 回复反馈按钮
 
 ## 说明
 

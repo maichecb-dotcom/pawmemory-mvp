@@ -621,6 +621,37 @@ select:focus {
   background: var(--cream);
 }
 
+.chat-message.pending {
+  color: var(--muted);
+}
+
+.feedback-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(71, 111, 88, 0.12);
+}
+
+.feedback-button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid rgba(71, 111, 88, 0.18);
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(255, 253, 250, 0.7);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.feedback-button:hover,
+.feedback-button.selected {
+  color: var(--sage-dark);
+  background: rgba(125, 161, 139, 0.14);
+}
+
 .chat-composer {
   display: grid;
   grid-template-columns: 1fr auto;
