@@ -2,15 +2,19 @@ const STORAGE_KEY = "pawmemory-mvp-v1";
 const DEFAULT_PHOTO = "assets/momo.png";
 
 const defaultState = {
+  hasSeenOnboarding: false,
   pet: {
     name: "Momo",
     species: "Golden Retriever",
     photo: DEFAULT_PHOTO,
     traits: ["温柔", "爱玩", "爱晒太阳"],
     habits: "听见钥匙声会跑到门口，晚上喜欢把头靠在人的腿边，开心时会叼来小黄球。",
+    routine: "早上会等早餐，下午喜欢睡在窗边，晚上散步回来会先喝水。",
+    gestures: "开心时会叼来小黄球，困了会把头靠在人的腿边。",
     likes: "晒太阳、小黄球、散步、被轻轻摸耳朵。",
     dislikes: "打雷声、吹风机、太突然的拥抱。",
     voice: "如果它能表达，会用短短的句子和安静的陪伴回应，不夸张、不说教。",
+    comfortStyle: "少讲道理，多描述动作和陪伴；不说它真的回来了。",
   },
   memories: [
     {
@@ -45,6 +49,7 @@ const defaultState = {
 };
 
 let state = loadState();
+let editingMemoryId = null;
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
@@ -54,7 +59,15 @@ function loadState() {
   if (!saved) return structuredClone(defaultState);
 
   try {
-    return JSON.parse(saved);
+    const parsed = JSON.parse(saved);
+    return {
+      ...structuredClone(defaultState),
+      ...parsed,
+      pet: {
+        ...structuredClone(defaultState).pet,
+        ...(parsed.pet || {}),
+      },
+    };
   } catch {
     return structuredClone(defaultState);
   }
@@ -93,6 +106,7 @@ function setView(viewName) {
     memories: "保存那些只有你知道的瞬间",
     chat: "和它温柔地说说话",
     album: "整理它留给你的画面",
+    care: "让陪伴保持安心",
   };
   $("#pageTitle").textContent = titles[viewName];
 }
@@ -114,9 +128,12 @@ function renderProfileForm() {
   fields.species.value = state.pet.species;
   fields.traits.value = state.pet.traits.join(", ");
   fields.habits.value = state.pet.habits;
+  fields.routine.value = state.pet.routine;
+  fields.gestures.value = state.pet.gestures;
   fields.likes.value = state.pet.likes;
   fields.dislikes.value = state.pet.dislikes;
   fields.voice.value = state.pet.voice;
+  fields.comfortStyle.value = state.pet.comfortStyle;
 }
 
 function renderHome() {
@@ -136,6 +153,7 @@ function renderHome() {
   $("#photoCount").textContent = album.length;
   $("#habitCount").textContent = Math.max(1, pet.habits.split(/[，。,、]/).filter(Boolean).length);
   renderChips($("#traitChips"), pet.traits);
+  $("#onboardingCard").classList.toggle("hidden", Boolean(state.hasSeenOnboarding));
 }
 
 function renderProfilePreview() {
@@ -143,7 +161,7 @@ function renderProfilePreview() {
   $("#profilePhoto").src = pet.photo;
   $("#profileName").textContent = pet.name;
   $("#profileSpecies").textContent = pet.species;
-  $("#profileSummary").textContent = `${firstSentence(pet.habits)} 它喜欢${firstSentence(pet.likes)}`;
+  $("#profileSummary").textContent = `${firstSentence(pet.habits)} ${firstSentence(pet.gestures)} 它喜欢${firstSentence(pet.likes)}。`;
   renderChips($("#profileTraits"), pet.traits);
 }
 
@@ -168,6 +186,10 @@ function renderMemories() {
         <span class="type-badge">${escapeHtml(memory.type)}</span>
       </header>
       <p>${escapeHtml(memory.body)}</p>
+      <footer class="card-actions">
+        <button class="text-button" data-edit-memory="${memory.id}" type="button">编辑</button>
+        <button class="text-button danger" data-delete-memory="${memory.id}" type="button">删除</button>
+      </footer>
     `;
     list.appendChild(card);
   });
@@ -225,6 +247,28 @@ function renderAll() {
   renderAlbum();
 }
 
+function fillMemoryForm(memory) {
+  const form = $("#memoryForm");
+  const fields = form.elements;
+  fields.title.value = memory.title;
+  fields.date.value = memory.date;
+  fields.type.value = memory.type;
+  fields.body.value = memory.body;
+  editingMemoryId = memory.id;
+  $("#memorySubmit").textContent = "保存修改";
+  $("#cancelMemoryEdit").classList.remove("hidden");
+  setView("memories");
+}
+
+function resetMemoryForm() {
+  const form = $("#memoryForm");
+  form.reset();
+  form.elements.date.valueAsDate = new Date();
+  editingMemoryId = null;
+  $("#memorySubmit").textContent = "保存记忆";
+  $("#cancelMemoryEdit").classList.add("hidden");
+}
+
 function firstSentence(text) {
   return (text || "").split(/[。.!！?？]/).filter(Boolean)[0] || "";
 }
@@ -251,9 +295,15 @@ function buildPetReply(userText) {
   const trait = pet.traits[0] || "温柔";
   const habit = firstSentence(pet.habits);
   const like = firstSentence(pet.likes);
+  const gesture = firstSentence(pet.gestures);
+  const lower = userText.toLowerCase();
+
+  if (/自杀|不想活|活不下去|伤害自己|suicide|kill myself/.test(lower)) {
+    return `我会先认真陪你停一下。${pet.name} 的记忆很重要，你也很重要。请现在联系身边可信任的人，或当地紧急救援服务；如果你愿意，也先把手机放近一点，给一个朋友发消息。`;
+  }
 
   if (/想|难过|伤心|miss|哭|不开心/.test(userText)) {
-    return `${pet.name} 会像以前那样安静地靠近你，先不吵你，只把头放在你手边。${memory ? `它好像还记得「${memory.title}」那一天，${memory.body}` : habit} 如果你愿意，它会陪你坐一会儿。`;
+    return `${pet.name} 会像以前那样安静地靠近你，先不吵你，只把头放在你手边。${memory ? `这让我想起「${memory.title}」：${memory.body}` : habit} 如果你愿意，就让这段记忆陪你坐一会儿。`;
   }
 
   if (/吃|饭|饿|零食/.test(userText)) {
@@ -261,7 +311,7 @@ function buildPetReply(userText) {
   }
 
   if (/玩|球|散步|出去/.test(userText)) {
-    return `${pet.name} 的尾巴大概已经开始轻轻晃了。${habit} 它会把这当成一次小小的邀请，像过去一样认真回应你。`;
+    return `${pet.name} 的尾巴大概已经开始轻轻晃了。${gesture || habit} 它会把这当成一次小小的邀请，像过去一样认真回应你。`;
   }
 
   return `${pet.name} 像是听懂了你的声音。它会用${trait}的方式待在旁边，${memory ? `带着「${memory.title}」那段记忆，` : ""}轻轻提醒你：那些被爱过的日子，并没有消失。`;
@@ -282,6 +332,27 @@ function fileToDataUrl(file) {
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+}
+
+function exportData() {
+  const exportPayload = {
+    app: "PawMemory MVP",
+    exportedAt: new Date().toISOString(),
+    note: "当前文件来自浏览器本地演示版，包含宠物画像、记忆、相册引用和聊天记录。",
+    data: state,
+  };
+  const blob = new Blob([JSON.stringify(exportPayload, null, 2)], {
+    type: "application/json",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `pawmemory-${state.pet.name || "pet"}-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  showToast("纪念资料已导出");
 }
 
 function bindEvents() {
@@ -305,9 +376,12 @@ function bindEvents() {
       species: fields.species.value.trim(),
       traits: splitTags(fields.traits.value),
       habits: fields.habits.value.trim(),
+      routine: fields.routine.value.trim(),
+      gestures: fields.gestures.value.trim(),
       likes: fields.likes.value.trim(),
       dislikes: fields.dislikes.value.trim(),
       voice: fields.voice.value.trim(),
+      comfortStyle: fields.comfortStyle.value.trim(),
     };
 
     if (photoFile) {
@@ -329,18 +403,51 @@ function bindEvents() {
     event.preventDefault();
     const form = event.currentTarget;
     const fields = form.elements;
-    state.memories.unshift({
-      id: crypto.randomUUID(),
+    const wasEditing = Boolean(editingMemoryId);
+    const memory = {
+      id: editingMemoryId || crypto.randomUUID(),
       title: fields.title.value.trim(),
       date: fields.date.value,
       type: fields.type.value,
       body: fields.body.value.trim(),
-    });
+    };
+
+    if (wasEditing) {
+      state.memories = state.memories.map((item) => (item.id === editingMemoryId ? memory : item));
+    } else {
+      state.memories.unshift(memory);
+    }
+
     saveState();
-    form.reset();
-    fields.date.valueAsDate = new Date();
+    resetMemoryForm();
     renderAll();
-    showToast("记忆已保存");
+    showToast(wasEditing ? "记忆已更新" : "记忆已保存");
+  });
+
+  $("#memoryList").addEventListener("click", (event) => {
+    const editButton = event.target.closest("[data-edit-memory]");
+    const deleteButton = event.target.closest("[data-delete-memory]");
+
+    if (editButton) {
+      const memory = state.memories.find((item) => item.id === editButton.dataset.editMemory);
+      if (memory) fillMemoryForm(memory);
+    }
+
+    if (deleteButton) {
+      const memory = state.memories.find((item) => item.id === deleteButton.dataset.deleteMemory);
+      if (!memory) return;
+      const confirmed = window.confirm(`确定删除「${memory.title}」这条记忆吗？`);
+      if (!confirmed) return;
+      state.memories = state.memories.filter((item) => item.id !== memory.id);
+      saveState();
+      renderAll();
+      showToast("记忆已删除");
+    }
+  });
+
+  $("#cancelMemoryEdit").addEventListener("click", () => {
+    resetMemoryForm();
+    showToast("已取消编辑");
   });
 
   $("#chatForm").addEventListener("submit", (event) => {
@@ -390,6 +497,16 @@ function bindEvents() {
     renderAll();
     setView("home");
     showToast("已恢复演示数据");
+  });
+
+  $("#resetDemoCare").addEventListener("click", () => $("#resetDemo").click());
+  $("#exportDataHome").addEventListener("click", exportData);
+  $("#exportDataCare").addEventListener("click", exportData);
+
+  $("#dismissOnboarding").addEventListener("click", () => {
+    state.hasSeenOnboarding = true;
+    saveState();
+    renderAll();
   });
 }
 

@@ -104,7 +104,10 @@ select {
 .nav-item,
 .ghost-button,
 .primary-button,
-.upload-button {
+.upload-button,
+.step-button,
+.icon-button,
+.text-button {
   border: 0;
   border-radius: var(--radius);
   cursor: pointer;
@@ -158,6 +161,15 @@ select {
   justify-content: space-between;
   gap: 18px;
   margin-bottom: 26px;
+}
+
+.topbar-actions,
+.button-row,
+.card-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .eyebrow {
@@ -215,6 +227,78 @@ h3 {
 .primary-button:hover,
 .upload-button:hover {
   background: #395d49;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.onboarding-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 22px;
+  padding: 22px;
+  border: 1px solid rgba(71, 111, 88, 0.18);
+  border-radius: var(--radius);
+  background: rgba(255, 253, 250, 0.92);
+  box-shadow: 0 14px 38px rgba(63, 54, 42, 0.08);
+}
+
+.onboarding-card h2,
+.onboarding-card p {
+  margin-bottom: 0;
+}
+
+.onboarding-card p {
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.onboarding-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.step-button {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  min-height: 88px;
+  padding: 14px;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  background: var(--surface-strong);
+  text-align: left;
+  font-weight: 780;
+}
+
+.step-button span {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  color: white;
+  background: var(--coral);
+  font-size: 13px;
+}
+
+.icon-button {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: var(--muted);
+  background: transparent;
+  font-size: 24px;
+  line-height: 1;
 }
 
 .view {
@@ -457,6 +541,28 @@ select:focus {
   line-height: 1.65;
 }
 
+.card-actions {
+  justify-content: flex-end;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.text-button {
+  padding: 7px 10px;
+  color: var(--sage-dark);
+  background: transparent;
+  font-weight: 780;
+}
+
+.text-button:hover {
+  background: rgba(125, 161, 139, 0.12);
+}
+
+.text-button.danger {
+  color: #a34d3c;
+}
+
 .type-badge {
   flex: none;
   height: 28px;
@@ -572,6 +678,49 @@ select:focus {
   background: rgba(255, 253, 250, 0.62);
 }
 
+.care-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
+  gap: 22px;
+}
+
+.settings-list,
+.principle-list {
+  display: grid;
+  gap: 16px;
+}
+
+.settings-list > div,
+.principle-list article {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.settings-list p,
+.principle-list p {
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.settings-list .primary-button,
+.settings-list .ghost-button {
+  margin-top: 12px;
+}
+
+.principle-list article {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 12px;
+}
+
+.principle-list span {
+  color: var(--coral);
+  font-weight: 850;
+}
+
 .toast {
   position: fixed;
   right: 24px;
@@ -609,7 +758,7 @@ select:focus {
   }
 
   .nav-list {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     overflow-x: auto;
   }
 
@@ -628,9 +777,15 @@ select:focus {
     flex-direction: column;
   }
 
+  .onboarding-card,
   .hero-grid,
   .split-layout,
-  .chat-layout {
+  .chat-layout,
+  .care-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .onboarding-steps {
     grid-template-columns: 1fr;
   }
 
@@ -655,7 +810,7 @@ select:focus {
 
 @media (max-width: 560px) {
   .nav-list {
-    grid-template-columns: repeat(5, 120px);
+    grid-template-columns: repeat(6, 116px);
   }
 
   h1 {

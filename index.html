@@ -23,6 +23,7 @@
           <button class="nav-item" data-view="memories">记忆</button>
           <button class="nav-item" data-view="chat">AI 陪伴</button>
           <button class="nav-item" data-view="album">相册</button>
+          <button class="nav-item" data-view="care">安心设置</button>
         </nav>
 
         <div class="sidebar-note">
@@ -37,10 +38,36 @@
             <p class="eyebrow">MVP Prototype</p>
             <h1 id="pageTitle">今天也想起它</h1>
           </div>
-          <button class="ghost-button" id="resetDemo" type="button">重置演示数据</button>
+          <div class="topbar-actions">
+            <button class="ghost-button" data-jump="care" type="button">隐私与边界</button>
+            <button class="ghost-button" id="resetDemo" type="button">重置演示数据</button>
+          </div>
         </header>
 
         <section class="view active" id="homeView" aria-label="首页">
+          <div class="onboarding-card" id="onboardingCard">
+            <div>
+              <p class="eyebrow">First Steps</p>
+              <h2>用三步建立它的记忆空间</h2>
+              <p>先补全画像，再写下 2-3 条具体记忆，最后试着和它说一句今天的心情。</p>
+            </div>
+            <div class="onboarding-steps">
+              <button class="step-button" data-jump="profile" type="button">
+                <span>1</span>
+                补宠物画像
+              </button>
+              <button class="step-button" data-jump="memories" type="button">
+                <span>2</span>
+                写一条记忆
+              </button>
+              <button class="step-button" data-jump="chat" type="button">
+                <span>3</span>
+                试一次陪伴
+              </button>
+            </div>
+            <button class="icon-button" id="dismissOnboarding" type="button" aria-label="关闭引导">×</button>
+          </div>
+
           <div class="hero-grid">
             <article class="pet-hero">
               <img id="homePetPhoto" src="assets/momo.png" alt="宠物照片" />
@@ -56,7 +83,10 @@
               <h2 id="dailyGreeting">晚上好，Momo 在这里。</h2>
               <p id="dailyMemory">还记得它最喜欢趴在窗边，阳光落在耳朵上的样子。</p>
               <div class="status-row" id="traitChips"></div>
-              <button class="primary-button" data-jump="chat" type="button">和它说说话</button>
+              <div class="button-row">
+                <button class="primary-button" data-jump="chat" type="button">和它说说话</button>
+                <button class="ghost-button" id="exportDataHome" type="button">导出资料</button>
+              </div>
             </section>
           </div>
 
@@ -105,6 +135,14 @@
                 <textarea name="habits" rows="4" placeholder="例如：听见钥匙声会跑到门口，睡前会趴在床边。"></textarea>
               </label>
               <label>
+                日常作息
+                <textarea name="routine" rows="3" placeholder="例如：早上 7 点等早餐，下午睡在窗边，晚上散步后会喝水。"></textarea>
+              </label>
+              <label>
+                标志性小动作
+                <textarea name="gestures" rows="3" placeholder="例如：开心时尾巴横着扫，困了会把头放在拖鞋旁。"></textarea>
+              </label>
+              <label>
                 喜欢的东西
                 <textarea name="likes" rows="3" placeholder="例如：小黄球、晒太阳、被摸下巴。"></textarea>
               </label>
@@ -115,6 +153,10 @@
               <label>
                 如果它能表达，会是什么语气？
                 <textarea name="voice" rows="3" placeholder="例如：短句、撒娇、安静陪伴，不会说太复杂的话。"></textarea>
+              </label>
+              <label>
+                用户希望它如何陪伴
+                <textarea name="comfortStyle" rows="3" placeholder="例如：少讲道理，多描述动作；不要假装它真的回来了。"></textarea>
               </label>
               <button class="primary-button" type="submit">保存宠物画像</button>
             </form>
@@ -127,6 +169,10 @@
               <div class="mini-list">
                 <h3>互动依据</h3>
                 <p id="profileSummary">AI 回应会参考这里保存的性格、习惯和记忆。</p>
+              </div>
+              <div class="mini-list">
+                <h3>边界提醒</h3>
+                <p>这个产品保存的是记忆与表达方式，不会宣称复活宠物。</p>
               </div>
             </aside>
           </div>
@@ -161,7 +207,10 @@
                 记忆内容
                 <textarea name="body" rows="5" required placeholder="写下它当时的动作、声音、表情，越具体越像。"></textarea>
               </label>
-              <button class="primary-button" type="submit">保存记忆</button>
+              <div class="button-row">
+                <button class="primary-button" id="memorySubmit" type="submit">保存记忆</button>
+                <button class="ghost-button hidden" id="cancelMemoryEdit" type="button">取消编辑</button>
+              </div>
             </form>
 
             <div class="timeline" id="memoryList"></div>
@@ -174,6 +223,10 @@
               <img id="chatPetPhoto" src="assets/momo.png" alt="宠物头像" />
               <h2 id="chatPetName">Momo</h2>
               <p id="chatHint">它会根据画像和记忆，用温柔的方式回应你。</p>
+              <div class="mini-list">
+                <h3>安心边界</h3>
+                <p>AI 只做纪念式互动，不替代现实支持。你可以随时暂停、删除或导出资料。</p>
+              </div>
             </aside>
 
             <section class="panel chat-panel">
@@ -198,6 +251,58 @@
             </label>
           </div>
           <div class="album-grid" id="albumGrid"></div>
+        </section>
+
+        <section class="view" id="careView" aria-label="安心设置">
+          <div class="care-grid">
+            <section class="panel form-panel">
+              <div class="section-heading">
+                <p class="eyebrow">Privacy</p>
+                <h2>隐私与数据</h2>
+              </div>
+              <div class="settings-list">
+                <div>
+                  <h3>当前保存位置</h3>
+                  <p>这个演示版的数据只保存在你的浏览器 localStorage 中，还没有上传到服务器。</p>
+                </div>
+                <div>
+                  <h3>导出纪念资料</h3>
+                  <p>你可以把宠物画像、记忆和聊天记录导出为 JSON 文件，便于备份或后续迁移。</p>
+                  <button class="primary-button" id="exportDataCare" type="button">导出 JSON</button>
+                </div>
+                <div>
+                  <h3>删除本地资料</h3>
+                  <p>如果你只是试用，可以一键恢复演示数据。正式产品里这里会变成彻底删除账号与宠物档案。</p>
+                  <button class="ghost-button" id="resetDemoCare" type="button">恢复演示数据</button>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel form-panel">
+              <div class="section-heading">
+                <p class="eyebrow">Care Boundary</p>
+                <h2>情绪边界</h2>
+              </div>
+              <div class="principle-list">
+                <article>
+                  <span>01</span>
+                  <p>不使用“复活宠物”作为承诺，只表达“保存记忆、延续陪伴”。</p>
+                </article>
+                <article>
+                  <span>02</span>
+                  <p>AI 回应以动作、习惯和记忆为主，不假装拥有真实意识。</p>
+                </article>
+                <article>
+                  <span>03</span>
+                  <p>用户可以随时暂停互动、导出资料或删除本地数据。</p>
+                </article>
+                <article>
+                  <span>04</span>
+                  <p>当用户表达强烈痛苦时，产品应该鼓励联系朋友、家人或专业支持。</p>
+                </article>
+              </div>
+            </section>
+          </div>
         </section>
       </main>
     </div>

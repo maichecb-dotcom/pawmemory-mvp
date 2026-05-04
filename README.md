@@ -21,6 +21,10 @@ https://unrivaled-licorice-4881b7.netlify.app/
 - 模拟 AI 陪伴对话
 - 本地相册上传
 - 数据保存在浏览器 localStorage
+- 首次进入引导
+- 记忆编辑与删除
+- 纪念资料 JSON 导出
+- 隐私说明与情绪边界页面
 
 ## 说明
 
