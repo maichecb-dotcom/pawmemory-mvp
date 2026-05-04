@@ -28,25 +28,39 @@ https://unrivaled-licorice-4881b7.netlify.app/
 
 ## 说明
 
-聊天页已经支持通过 Netlify Functions 调用 OpenAI Responses API。若线上环境没有配置 `OPENAI_API_KEY`，或本地直接打开 `index.html`，会自动回退到本地模拟回应，适合继续演示。
+聊天页已经支持通过 Netlify Functions 调用大模型 API。若线上环境没有配置密钥，或本地直接打开 `index.html`，会自动回退到本地模拟回应，适合继续演示。
 
-## 接入 OpenAI
+## 接入 DeepSeek
 
-在 Netlify 后台配置环境变量：
+推荐 MVP 先用 DeepSeek，成本更友好。先在 DeepSeek 开放平台创建 API key：
+
+https://platform.deepseek.com/api_keys
+
+然后在 Netlify 后台配置环境变量：
 
 1. 打开当前站点
 2. 进入 `Site configuration`
 3. 找到 `Environment variables`
-4. 添加：
-   - Key: `OPENAI_API_KEY`
-   - Value: 你的 OpenAI API key
-5. 保存后重新部署一次站点
+4. 添加这些变量：
+   - Key: `AI_PROVIDER`
+   - Value: `deepseek`
+   - Key: `DEEPSEEK_API_KEY`
+   - Value: 你的 DeepSeek API key
+5. 保存后到 `Deploys` 里重新部署一次站点
 
 可选环境变量：
 
-- `OPENAI_MODEL`: 默认是 `gpt-5.4-mini`
+- `DEEPSEEK_MODEL`: 默认是 `deepseek-chat`
 
 不要把 API key 写进前端代码或提交到 GitHub。
+
+## 接入 OpenAI
+
+如果以后要切回 OpenAI，在 Netlify 环境变量中配置：
+
+- `AI_PROVIDER`: `openai`
+- `OPENAI_API_KEY`: 你的 OpenAI API key
+- `OPENAI_MODEL`: 默认是 `gpt-5.4-mini`
 
 ## 正式部署路线
 

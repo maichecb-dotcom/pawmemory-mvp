@@ -1,12 +1,21 @@
 const OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses";
-const MODEL = process.env.OPENAI_MODEL || "gpt-5.4-mini";
+const DEEPSEEK_CHAT_URL = "https://api.deepseek.com/chat/completions";
+const AI_PROVIDER = (process.env.AI_PROVIDER || "openai").toLowerCase();
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-5.4-mini";
+const DEEPSEEK_MODEL = process.env.DEEPSEEK_MODEL || "deepseek-chat";
 
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return jsonResponse(405, { error: "Method not allowed" });
   }
 
-  if (!process.env.OPENAI_API_KEY) {
+  if (AI_PROVIDER === "deepseek" && !process.env.DEEPSEEK_API_KEY) {
+    return jsonResponse(500, {
+      error: "DEEPSEEK_API_KEY is not configured in Netlify environment variables.",
+    });
+  }
+
+  if (AI_PROVIDER !== "deepseek" && !process.env.OPENAI_API_KEY) {
     return jsonResponse(500, {
       error: "OPENAI_API_KEY is not configured in Netlify environment variables.",
     });
@@ -23,31 +32,13 @@ exports.handler = async (event) => {
       return jsonResponse(400, { error: "Message is required." });
     }
 
-    const response = await fetch(OPENAI_RESPONSES_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        instructions: buildInstructions(pet, memories),
-        input: buildInput(chat, message),
-        max_output_tokens: 420,
-      }),
-    });
+    const reply =
+      AI_PROVIDER === "deepseek"
+        ? await createDeepSeekReply({ pet, memories, chat, message })
+        : await createOpenAIReply({ pet, memories, chat, message });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      return jsonResponse(response.status, {
-        error: data.error?.message || "OpenAI request failed.",
-      });
-    }
-
-    const reply = extractOutputText(data);
     if (!reply) {
-      return jsonResponse(502, { error: "OpenAI returned an empty response." });
+      return jsonResponse(502, { error: "The AI provider returned an empty response." });
     }
 
     return jsonResponse(200, { reply });
@@ -57,6 +48,54 @@ exports.handler = async (event) => {
     });
   }
 };
+
+async function createOpenAIReply({ pet, memories, chat, message }) {
+  const response = await fetch(OPENAI_RESPONSES_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      instructions: buildInstructions(pet, memories),
+      input: buildOpenAIInput(chat, message),
+      max_output_tokens: 420,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error?.message || "OpenAI request failed.");
+  }
+
+  return extractOpenAIOutputText(data);
+}
+
+async function createDeepSeekReply({ pet, memories, chat, message }) {
+  const response = await fetch(DEEPSEEK_CHAT_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: DEEPSEEK_MODEL,
+      messages: buildChatMessages(pet, memories, chat, message),
+      max_tokens: 420,
+      temperature: 0.7,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error?.message || "DeepSeek request failed.");
+  }
+
+  return data.choices?.[0]?.message?.content?.trim() || "";
+}
 
 function buildInstructions(pet, memories) {
   return [
@@ -86,7 +125,7 @@ function buildInstructions(pet, memories) {
   ].join("\n");
 }
 
-function buildInput(chat, message) {
+function buildOpenAIInput(chat, message) {
   const recentMessages = chat.slice(-8).map((item) => ({
     role: item.role === "pet" ? "assistant" : "user",
     content: [
@@ -102,6 +141,25 @@ function buildInput(chat, message) {
     {
       role: "user",
       content: [{ type: "input_text", text: message }],
+    },
+  ];
+}
+
+function buildChatMessages(pet, memories, chat, message) {
+  const recentMessages = chat.slice(-8).map((item) => ({
+    role: item.role === "pet" ? "assistant" : "user",
+    content: sanitizeText(item.text, 800),
+  }));
+
+  return [
+    {
+      role: "system",
+      content: buildInstructions(pet, memories),
+    },
+    ...recentMessages,
+    {
+      role: "user",
+      content: message,
     },
   ];
 }
@@ -153,7 +211,7 @@ function sanitizeText(value, maxLength) {
     .slice(0, maxLength);
 }
 
-function extractOutputText(data) {
+function extractOpenAIOutputText(data) {
   if (typeof data.output_text === "string") return data.output_text.trim();
 
   return (data.output || [])
