@@ -215,6 +215,15 @@ function renderChat() {
   stream.scrollTop = stream.scrollHeight;
 }
 
+function setChatComposerLoading(isLoading) {
+  const form = $("#chatForm");
+  const fields = form.elements;
+  fields.message.disabled = isLoading;
+  const button = form.querySelector("button");
+  button.disabled = isLoading;
+  button.textContent = isLoading ? "回应中" : "发送";
+}
+
 function renderAlbum() {
   const grid = $("#albumGrid");
   grid.innerHTML = "";
@@ -315,6 +324,46 @@ function buildPetReply(userText) {
   }
 
   return `${pet.name} 像是听懂了你的声音。它会用${trait}的方式待在旁边，${memory ? `带着「${memory.title}」那段记忆，` : ""}轻轻提醒你：那些被爱过的日子，并没有消失。`;
+}
+
+async function getCompanionReply(message) {
+  if (window.location.protocol === "file:") {
+    return {
+      reply: buildPetReply(message),
+      source: "local",
+    };
+  }
+
+  try {
+    const response = await fetch("/.netlify/functions/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message,
+        pet: state.pet,
+        memories: state.memories,
+        chat: state.chat.slice(-10),
+      }),
+    });
+    const data = await response.json();
+
+    if (!response.ok || !data.reply) {
+      throw new Error(data.error || "AI request failed");
+    }
+
+    return {
+      reply: data.reply,
+      source: "openai",
+    };
+  } catch (error) {
+    console.warn("Falling back to local companion reply:", error);
+    return {
+      reply: buildPetReply(message),
+      source: "fallback",
+    };
+  }
 }
 
 function pickRelevantMemory(text, memories) {
@@ -450,7 +499,7 @@ function bindEvents() {
     showToast("已取消编辑");
   });
 
-  $("#chatForm").addEventListener("submit", (event) => {
+  $("#chatForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
     const fields = form.elements;
@@ -460,16 +509,26 @@ function bindEvents() {
     state.chat.push({ role: "user", text, time: getTimeLabel() });
     renderChat();
     form.reset();
+    setChatComposerLoading(true);
 
-    window.setTimeout(() => {
-      state.chat.push({
-        role: "pet",
-        text: buildPetReply(text),
-        time: getTimeLabel(),
-      });
-      saveState();
-      renderChat();
-    }, 520);
+    const { reply, source } = await getCompanionReply(text);
+
+    state.chat.push({
+      role: "pet",
+      text: reply,
+      time: getTimeLabel(),
+    });
+    saveState();
+    renderChat();
+    setChatComposerLoading(false);
+
+    if (source === "fallback") {
+      showToast("AI 暂时不可用，已使用本地模拟回应");
+    }
+
+    if (source === "local") {
+      showToast("本地预览使用模拟回应，线上部署后可用真实 AI");
+    }
   });
 
   $("#albumUpload").addEventListener("change", async (event) => {
