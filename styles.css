@@ -469,6 +469,16 @@ h3 {
   grid-template-columns: 1fr;
 }
 
+#homeView .hero-grid {
+  position: relative;
+  min-height: min(720px, calc(100svh - 150px));
+}
+
+#homeView .pet-hero {
+  min-height: inherit;
+  height: 100%;
+}
+
 @media (min-width: 921px) {
   .onboarding-card,
   .hero-grid,
@@ -536,7 +546,8 @@ h3 {
   position: absolute;
   z-index: 1;
   right: 24px;
-  bottom: 24px;
+  top: 24px;
+  bottom: auto;
   left: 24px;
   color: white;
 }
@@ -601,6 +612,20 @@ h3 {
 
 .daily-panel p {
   line-height: 1.7;
+}
+
+#homeView .daily-panel {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  left: 16px;
+  z-index: 2;
+  width: auto;
+  min-height: auto;
+  margin: 0;
+  padding: 22px;
+  background: rgba(255, 253, 250, 0.9);
+  backdrop-filter: blur(18px);
 }
 
 .today-memory-card {
@@ -1376,12 +1401,22 @@ select:focus {
   }
 
   #homeView .hero-grid {
+    min-height: calc(100svh - 104px);
     margin: -2px -14px 0;
   }
 
   #homeView .pet-hero {
-    min-height: calc(100svh - 260px);
-    border-radius: 0 0 26px 26px;
+    min-height: inherit;
+    border-radius: 0;
+  }
+
+  #homeView .daily-panel {
+    right: 14px;
+    bottom: 18px;
+    left: 14px;
+    width: auto;
+    margin: 0;
+    padding: 18px;
   }
 
   .daily-panel {
