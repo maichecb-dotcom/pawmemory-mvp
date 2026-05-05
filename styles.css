@@ -812,12 +812,22 @@ select:focus {
 @media (max-width: 920px) {
   .app-shell {
     grid-template-columns: 1fr;
+    min-height: 100svh;
   }
 
   .sidebar {
-    position: static;
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 20;
     height: auto;
-    padding: 16px;
+    padding: 8px max(10px, env(safe-area-inset-left)) max(8px, env(safe-area-inset-bottom))
+      max(10px, env(safe-area-inset-right));
+    border-top: 1px solid var(--line);
+    border-right: 0;
+    background: rgba(255, 253, 250, 0.94);
+    box-shadow: 0 -10px 28px rgba(63, 54, 42, 0.1);
   }
 
   .brand,
@@ -826,23 +836,45 @@ select:focus {
   }
 
   .nav-list {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    overflow-x: auto;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+    overflow: visible;
   }
 
   .nav-item {
+    display: grid;
+    place-items: center;
+    min-height: 48px;
+    padding: 6px 4px;
+    border-radius: 8px;
     text-align: center;
-    white-space: nowrap;
+    white-space: normal;
+    font-size: 12px;
+    line-height: 1.15;
   }
 
   .main {
-    padding: 22px 16px 28px;
+    width: 100%;
+    padding: 18px 14px calc(86px + env(safe-area-inset-bottom));
   }
 
   .topbar,
   .album-header {
     align-items: flex-start;
     flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .topbar-actions,
+  .button-row {
+    width: 100%;
+  }
+
+  .topbar-actions .ghost-button,
+  .button-row .primary-button,
+  .button-row .ghost-button {
+    flex: 1 1 0;
   }
 
   .onboarding-card,
@@ -857,6 +889,16 @@ select:focus {
     grid-template-columns: 1fr;
   }
 
+  .onboarding-card {
+    padding: 18px;
+  }
+
+  .step-button {
+    min-height: 60px;
+    grid-template-columns: 28px 1fr;
+    align-items: center;
+  }
+
   .form-grid,
   .memory-tools {
     grid-template-columns: 1fr;
@@ -864,7 +906,14 @@ select:focus {
 
   .pet-hero,
   .daily-panel {
-    min-height: 340px;
+    min-height: 300px;
+  }
+
+  .daily-panel,
+  .form-panel,
+  .profile-preview,
+  .companion-card {
+    padding: 18px;
   }
 
   .metrics-grid,
@@ -877,21 +926,48 @@ select:focus {
   }
 
   .chat-panel {
-    grid-template-rows: minmax(420px, 62vh) auto;
+    grid-template-rows: minmax(360px, calc(100svh - 330px)) auto;
+  }
+
+  .chat-stream {
+    padding: 16px;
+  }
+
+  .toast {
+    right: 14px;
+    bottom: calc(86px + env(safe-area-inset-bottom));
+    left: 14px;
+    max-width: none;
   }
 }
 
 @media (max-width: 560px) {
-  .nav-list {
-    grid-template-columns: repeat(6, 116px);
+  body {
+    min-width: 0;
   }
 
   h1 {
-    font-size: 34px;
+    font-size: 30px;
+  }
+
+  h2 {
+    font-size: 21px;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+  }
+
+  .pet-hero {
+    min-height: 260px;
   }
 
   .pet-hero-overlay h2 {
-    font-size: 34px;
+    font-size: 32px;
+  }
+
+  .daily-panel {
+    min-height: auto;
   }
 
   .chat-composer {
@@ -900,5 +976,13 @@ select:focus {
 
   .chat-message {
     max-width: 92%;
+  }
+
+  .metrics-grid {
+    gap: 10px;
+  }
+
+  .metric {
+    min-height: 72px;
   }
 }
