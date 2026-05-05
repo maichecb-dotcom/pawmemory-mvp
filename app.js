@@ -88,7 +88,14 @@ function loadState() {
 }
 
 function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    return true;
+  } catch (error) {
+    console.error("Failed to save local state:", error);
+    showToast("保存失败：图片可能太大，请换一张较小的照片");
+    return false;
+  }
 }
 
 function showToast(message) {
@@ -521,7 +528,21 @@ function pickRelevantMemory(text, memories) {
 function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
+    reader.onload = () => {
+      const image = new Image();
+      image.onload = () => {
+        const maxEdge = 1400;
+        const scale = Math.min(1, maxEdge / Math.max(image.width, image.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(image.width * scale);
+        canvas.height = Math.round(image.height * scale);
+        const context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      image.onerror = () => resolve(reader.result);
+      image.src = reader.result;
+    };
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
@@ -559,41 +580,54 @@ function bindEvents() {
 
   $("#profileForm").addEventListener("submit", async (event) => {
     event.preventDefault();
-    const form = event.currentTarget;
-    const fields = form.elements;
-    const photoFile = fields.photo.files[0];
+    try {
+      const form = event.currentTarget;
+      const fields = form.elements;
+      const submitButton = form.querySelector("button[type='submit']");
+      const photoFile = fields.photo.files[0];
+      submitButton.disabled = true;
+      submitButton.textContent = "保存中";
 
-    state.pet = {
-      ...state.pet,
-      name: fields.name.value.trim(),
-      species: fields.species.value.trim(),
-      birthday: fields.birthday.value,
-      memorialDate: fields.memorialDate.value,
-      traits: splitTags(fields.traits.value),
-      habits: fields.habits.value.trim(),
-      routine: fields.routine.value.trim(),
-      gestures: fields.gestures.value.trim(),
-      favoritePlaces: fields.favoritePlaces.value.trim(),
-      likes: fields.likes.value.trim(),
-      dislikes: fields.dislikes.value.trim(),
-      voice: fields.voice.value.trim(),
-      comfortStyle: fields.comfortStyle.value.trim(),
-      story: fields.story.value.trim(),
-    };
+      state.pet = {
+        ...state.pet,
+        name: fields.name.value.trim(),
+        species: fields.species.value.trim(),
+        birthday: fields.birthday.value,
+        memorialDate: fields.memorialDate.value,
+        traits: splitTags(fields.traits.value),
+        habits: fields.habits.value.trim(),
+        routine: fields.routine.value.trim(),
+        gestures: fields.gestures.value.trim(),
+        favoritePlaces: fields.favoritePlaces.value.trim(),
+        likes: fields.likes.value.trim(),
+        dislikes: fields.dislikes.value.trim(),
+        voice: fields.voice.value.trim(),
+        comfortStyle: fields.comfortStyle.value.trim(),
+        story: fields.story.value.trim(),
+      };
 
-    if (photoFile) {
-      state.pet.photo = await fileToDataUrl(photoFile);
-      state.album.unshift({
-        id: crypto.randomUUID(),
-        src: state.pet.photo,
-        caption: `${state.pet.name} 的头像照片`,
-      });
-      fields.photo.value = "";
+      if (photoFile) {
+        state.pet.photo = await fileToDataUrl(photoFile);
+        state.album.unshift({
+          id: crypto.randomUUID(),
+          src: state.pet.photo,
+          caption: `${state.pet.name} 的头像照片`,
+        });
+        fields.photo.value = "";
+      }
+
+      if (saveState()) {
+        renderAll();
+        showToast("宠物画像已保存");
+      }
+      submitButton.disabled = false;
+      submitButton.textContent = "保存宠物画像";
+    } catch (error) {
+      console.error("Profile save failed:", error);
+      showToast("保存失败，请稍后再试");
+      event.currentTarget.querySelector("button[type='submit']").disabled = false;
+      event.currentTarget.querySelector("button[type='submit']").textContent = "保存宠物画像";
     }
-
-    saveState();
-    renderAll();
-    showToast("宠物画像已保存");
   });
 
   $("#memoryForm").addEventListener("submit", (event) => {

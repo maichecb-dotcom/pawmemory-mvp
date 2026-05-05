@@ -424,23 +424,24 @@ h3 {
 .metric-icon {
   display: grid;
   place-items: center;
-  flex: 0 0 42px;
-  width: 42px;
-  height: 42px;
+  flex: 0 0 52px;
+  width: 52px;
+  height: 52px;
   border-radius: 999px;
-  color: var(--sage-dark);
+  color: var(--coral);
   background: rgba(125, 161, 139, 0.14);
-  font-size: 14px;
+  font-size: 26px;
+  line-height: 1;
   font-weight: 850;
 }
 
-.metric span {
+.metric-label {
   display: block;
   margin-bottom: 2px;
-  color: var(--coral);
-  font-size: 30px;
-  line-height: 1;
-  font-weight: 850;
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 800;
 }
 
 .metric p {
@@ -985,5 +986,12 @@ select:focus {
 
   .metric {
     min-height: 72px;
+  }
+
+  .metric-icon {
+    flex-basis: 48px;
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
   }
 }

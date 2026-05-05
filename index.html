@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PawMemory MVP</title>
-    <link rel="stylesheet" href="styles.css?v=20260505-mobile-fix" />
+    <link rel="stylesheet" href="styles.css?v=20260505-profile-save-fix" />
   </head>
   <body>
     <div class="app-shell">
@@ -88,23 +88,23 @@
 
           <div class="metrics-grid">
             <article class="metric">
-              <div class="metric-icon">记</div>
+              <div class="metric-icon" id="memoryCount">0</div>
               <div>
-                <span id="memoryCount">0</span>
+                <span class="metric-label">记忆</span>
                 <p>已保存记忆</p>
               </div>
             </article>
             <article class="metric">
-              <div class="metric-icon">影</div>
+              <div class="metric-icon" id="photoCount">0</div>
               <div>
-                <span id="photoCount">0</span>
+                <span class="metric-label">相册</span>
                 <p>相册照片</p>
               </div>
             </article>
             <article class="metric">
-              <div class="metric-icon">习</div>
+              <div class="metric-icon" id="habitCount">0</div>
               <div>
-                <span id="habitCount">0</span>
+                <span class="metric-label">习惯</span>
                 <p>行为习惯</p>
               </div>
             </article>
@@ -349,6 +349,6 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="app.js?v=20260505-mobile-fix"></script>
+    <script src="app.js?v=20260505-profile-save-fix"></script>
   </body>
 </html>
