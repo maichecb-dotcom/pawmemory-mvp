@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PawMemory MVP</title>
-    <link rel="stylesheet" href="styles.css?v=20260505-full-hero-overlay" />
+    <link rel="stylesheet" href="styles.css?v=20260505-hero-content-layer" />
   </head>
   <body>
     <div class="app-shell">
@@ -86,15 +86,14 @@
             <article class="pet-hero">
               <img id="homePetPhoto" src="assets/momo.png" alt="宠物照片" />
               <div class="pet-hero-overlay">
-                <span id="homeSpecies">Dog</span>
-                <h2 id="homePetName">Momo</h2>
-                <p id="homePetLine">温柔、爱晒太阳、听见钥匙声会跑到门口。</p>
+                <p class="hero-greeting-prefix">晚上好，</p>
+                <h2><span id="homePetName">Momo</span> 在这里。</h2>
+                <div class="status-row hero-traits" id="traitChips"></div>
               </div>
             </article>
 
             <section class="daily-panel">
               <p class="eyebrow">今日陪伴</p>
-              <h2 id="dailyGreeting">晚上好，Momo 在这里。</h2>
               <article class="today-memory-card">
                 <img id="dailyMemoryPhoto" src="assets/momo.png" alt="今日记忆照片" />
                 <div>
@@ -105,12 +104,11 @@
                   <p id="dailyMemory">还记得它最喜欢趴在窗边，阳光落在耳朵上的样子。</p>
                 </div>
               </article>
-              <div class="status-row" id="traitChips"></div>
-              <div class="button-row">
-                <button class="primary-button paw-button" data-jump="chat" type="button">和它说说话</button>
-                <button class="ghost-button" id="exportDataHome" type="button">导出资料</button>
-              </div>
             </section>
+            <div class="home-action-row">
+              <button class="primary-button paw-button" data-jump="chat" type="button">和它说说话</button>
+              <button class="ghost-button" id="exportDataHome" type="button">导出资料</button>
+            </div>
           </div>
 
         </section>
@@ -362,6 +360,6 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="app.js?v=20260505-full-hero-overlay"></script>
+    <script src="app.js?v=20260505-hero-content-layer"></script>
   </body>
 </html>

@@ -166,10 +166,7 @@ function renderHome() {
   const latestMemory = memories[0];
 
   $("#homePetPhoto").src = pet.photo;
-  $("#homeSpecies").textContent = pet.species;
   $("#homePetName").textContent = pet.name;
-  $("#homePetLine").textContent = `${pet.traits.slice(0, 3).join("、")}。${firstSentence(pet.habits)}`;
-  $("#dailyGreeting").textContent = `晚上好，${pet.name} 在这里。`;
   $("#dailyMemoryPhoto").src = pet.photo;
   $("#dailyMemoryDate").textContent = latestMemory ? formatMemoryDate(latestMemory.date) : "今天";
   $("#dailyMemory").textContent = latestMemory
