@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PawMemory MVP</title>
-    <link rel="stylesheet" href="styles.css?v=20260505-app-detail-polish" />
+    <link rel="stylesheet" href="styles.css?v=20260505-home-chat-fix" />
   </head>
   <body>
     <div class="app-shell">
@@ -18,10 +18,6 @@
             <span class="nav-icon" aria-hidden="true">⌂</span>
             <span class="nav-label">首页</span>
           </button>
-          <button class="nav-item" data-view="profile" type="button">
-            <span class="nav-icon" aria-hidden="true">像</span>
-            <span class="nav-label">画像</span>
-          </button>
           <button class="nav-item" data-view="memories" type="button">
             <span class="nav-icon" aria-hidden="true">记</span>
             <span class="nav-label">记忆</span>
@@ -33,6 +29,10 @@
           <button class="nav-item" data-view="album" type="button">
             <span class="nav-icon" aria-hidden="true">影</span>
             <span class="nav-label">相册</span>
+          </button>
+          <button class="nav-item" data-view="profile" type="button">
+            <span class="nav-icon" aria-hidden="true">像</span>
+            <span class="nav-label">画像</span>
           </button>
           <button class="nav-item" data-view="care" type="button">
             <span class="nav-icon" aria-hidden="true">安</span>
@@ -113,29 +113,6 @@
             </section>
           </div>
 
-          <div class="metrics-grid">
-            <article class="metric">
-              <div class="metric-icon" id="memoryCount">0</div>
-              <div>
-                <span class="metric-label">记忆</span>
-                <p>已保存记忆</p>
-              </div>
-            </article>
-            <article class="metric">
-              <div class="metric-icon" id="photoCount">0</div>
-              <div>
-                <span class="metric-label">相册</span>
-                <p>相册照片</p>
-              </div>
-            </article>
-            <article class="metric">
-              <div class="metric-icon" id="habitCount">0</div>
-              <div>
-                <span class="metric-label">习惯</span>
-                <p>行为习惯</p>
-              </div>
-            </article>
-          </div>
         </section>
 
         <section class="view" id="profileView" aria-label="宠物画像">
@@ -385,6 +362,6 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="app.js?v=20260505-app-detail-polish"></script>
+    <script src="app.js?v=20260505-home-chat-fix"></script>
   </body>
 </html>

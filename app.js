@@ -176,9 +176,6 @@ function renderHome() {
     ? latestMemory.body
     : "先保存一条记忆，AI 陪伴会更有它自己的样子。";
 
-  $("#memoryCount").textContent = memories.length;
-  $("#photoCount").textContent = album.length;
-  $("#habitCount").textContent = Math.max(1, pet.habits.split(/[，。,、]/).filter(Boolean).length);
   renderChips($("#traitChips"), pet.traits);
   $("#onboardingCard").classList.toggle("hidden", Boolean(state.hasSeenOnboarding));
 }
