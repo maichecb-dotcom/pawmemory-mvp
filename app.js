@@ -8,13 +8,17 @@ const defaultState = {
     species: "Golden Retriever",
     photo: DEFAULT_PHOTO,
     traits: ["温柔", "爱玩", "爱晒太阳"],
+    birthday: "2017-04-12",
+    memorialDate: "",
     habits: "听见钥匙声会跑到门口，晚上喜欢把头靠在人的腿边，开心时会叼来小黄球。",
     routine: "早上会等早餐，下午喜欢睡在窗边，晚上散步回来会先喝水。",
     gestures: "开心时会叼来小黄球，困了会把头靠在人的腿边。",
+    favoritePlaces: "窗边垫子、门口地毯、你的书桌旁。",
     likes: "晒太阳、小黄球、散步、被轻轻摸耳朵。",
     dislikes: "打雷声、吹风机、太突然的拥抱。",
     voice: "如果它能表达，会用短短的句子和安静的陪伴回应，不夸张、不说教。",
     comfortStyle: "少讲道理，多描述动作和陪伴；不说它真的回来了。",
+    story: "它陪你度过很多普通的晚上，常常只是安静待在旁边。",
   },
   memories: [
     {
@@ -52,6 +56,8 @@ const defaultState = {
 
 let state = loadState();
 let editingMemoryId = null;
+let memorySearch = "";
+let memoryTypeFilter = "全部";
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
@@ -134,14 +140,18 @@ function renderProfileForm() {
   const fields = form.elements;
   fields.name.value = state.pet.name;
   fields.species.value = state.pet.species;
+  fields.birthday.value = state.pet.birthday || "";
+  fields.memorialDate.value = state.pet.memorialDate || "";
   fields.traits.value = state.pet.traits.join(", ");
   fields.habits.value = state.pet.habits;
   fields.routine.value = state.pet.routine;
   fields.gestures.value = state.pet.gestures;
+  fields.favoritePlaces.value = state.pet.favoritePlaces;
   fields.likes.value = state.pet.likes;
   fields.dislikes.value = state.pet.dislikes;
   fields.voice.value = state.pet.voice;
   fields.comfortStyle.value = state.pet.comfortStyle;
+  fields.story.value = state.pet.story;
 }
 
 function renderHome() {
@@ -169,20 +179,27 @@ function renderProfilePreview() {
   $("#profilePhoto").src = pet.photo;
   $("#profileName").textContent = pet.name;
   $("#profileSpecies").textContent = pet.species;
-  $("#profileSummary").textContent = `${firstSentence(pet.habits)} ${firstSentence(pet.gestures)} 它喜欢${firstSentence(pet.likes)}。`;
+  $("#profileDates").textContent = formatPetDates(pet);
+  $("#profileSummary").textContent = `${firstSentence(pet.habits)} ${firstSentence(pet.gestures)} 它常待在${firstSentence(pet.favoritePlaces) || "你身边"}。`;
   renderChips($("#profileTraits"), pet.traits);
 }
 
 function renderMemories() {
   const list = $("#memoryList");
   list.innerHTML = "";
+  const visibleMemories = getVisibleMemories();
 
   if (!state.memories.length) {
     list.innerHTML = `<div class="empty-state">还没有记忆。先写下一件它的小事，越具体越好。</div>`;
     return;
   }
 
-  state.memories.forEach((memory) => {
+  if (!visibleMemories.length) {
+    list.innerHTML = `<div class="empty-state">没有找到匹配的记忆。换个关键词或类型试试。</div>`;
+    return;
+  }
+
+  visibleMemories.forEach((memory) => {
     const card = document.createElement("article");
     card.className = "timeline-card";
     card.innerHTML = `
@@ -230,6 +247,7 @@ function renderFeedbackControls(message) {
     ["comfort", "舒服"],
     ["unlike", "不像它"],
     ["human", "太像人"],
+    ["unsafe", "不舒服"],
   ];
 
   return `
@@ -248,6 +266,9 @@ function renderFeedbackControls(message) {
           `,
         )
         .join("")}
+      <button class="feedback-button regenerate" data-regenerate-message="${message.id}" type="button">
+        重新生成
+      </button>
     </div>
   `;
 }
@@ -319,6 +340,17 @@ function renderAll() {
   renderAlbum();
 }
 
+function getVisibleMemories() {
+  const keyword = memorySearch.trim().toLowerCase();
+
+  return state.memories.filter((memory) => {
+    const matchesType = memoryTypeFilter === "全部" || memory.type === memoryTypeFilter;
+    const haystack = `${memory.title} ${memory.date} ${memory.type} ${memory.body}`.toLowerCase();
+    const matchesSearch = !keyword || haystack.includes(keyword);
+    return matchesType && matchesSearch;
+  });
+}
+
 function fillMemoryForm(memory) {
   const form = $("#memoryForm");
   const fields = form.elements;
@@ -343,6 +375,13 @@ function resetMemoryForm() {
 
 function firstSentence(text) {
   return (text || "").split(/[。.!！?？]/).filter(Boolean)[0] || "";
+}
+
+function formatPetDates(pet) {
+  const parts = [];
+  if (pet.birthday) parts.push(`出生 / 领养：${pet.birthday}`);
+  if (pet.memorialDate) parts.push(`纪念日：${pet.memorialDate}`);
+  return parts.length ? parts.join(" · ") : "还没有填写纪念日期";
 }
 
 function escapeHtml(value) {
@@ -407,7 +446,7 @@ async function getCompanionReply(message) {
         message,
         pet: state.pet,
         memories: state.memories,
-        chat: state.chat.slice(-10),
+        chat: state.chat.filter((item) => !item.pending).slice(-10),
       }),
     });
     const data = await response.json();
@@ -426,6 +465,48 @@ async function getCompanionReply(message) {
       reply: buildPetReply(message),
       source: "fallback",
     };
+  }
+}
+
+async function regenerateReply(messageId) {
+  const petMessageIndex = state.chat.findIndex((message) => message.id === messageId);
+  if (petMessageIndex <= 0) return;
+
+  const previousUserMessage = [...state.chat]
+    .slice(0, petMessageIndex)
+    .reverse()
+    .find((message) => message.role === "user");
+  if (!previousUserMessage) return;
+
+  state.chat = state.chat.map((message) =>
+    message.id === messageId
+      ? {
+          ...message,
+          text: `${state.pet.name} 正在重新想一想...`,
+          pending: true,
+        }
+      : message,
+  );
+  renderChat();
+  setChatComposerLoading(true);
+
+  const { reply, source } = await getCompanionReply(previousUserMessage.text);
+  state.chat = state.chat.map((message) =>
+    message.id === messageId
+      ? {
+          id: crypto.randomUUID(),
+          role: "pet",
+          text: reply,
+          time: getTimeLabel(),
+        }
+      : message,
+  );
+  saveState();
+  renderChat();
+  setChatComposerLoading(false);
+
+  if (source === "fallback") {
+    showToast("AI 暂时不可用，已使用本地模拟回应");
   }
 }
 
@@ -486,14 +567,18 @@ function bindEvents() {
       ...state.pet,
       name: fields.name.value.trim(),
       species: fields.species.value.trim(),
+      birthday: fields.birthday.value,
+      memorialDate: fields.memorialDate.value,
       traits: splitTags(fields.traits.value),
       habits: fields.habits.value.trim(),
       routine: fields.routine.value.trim(),
       gestures: fields.gestures.value.trim(),
+      favoritePlaces: fields.favoritePlaces.value.trim(),
       likes: fields.likes.value.trim(),
       dislikes: fields.dislikes.value.trim(),
       voice: fields.voice.value.trim(),
       comfortStyle: fields.comfortStyle.value.trim(),
+      story: fields.story.value.trim(),
     };
 
     if (photoFile) {
@@ -592,6 +677,12 @@ function bindEvents() {
   });
 
   $("#chatStream").addEventListener("click", (event) => {
+    const regenerateButton = event.target.closest("[data-regenerate-message]");
+    if (regenerateButton) {
+      regenerateReply(regenerateButton.dataset.regenerateMessage);
+      return;
+    }
+
     const feedbackButton = event.target.closest("[data-feedback-message]");
     if (!feedbackButton) return;
 
@@ -601,6 +692,16 @@ function bindEvents() {
     saveState();
     renderChat();
     showToast("已记录反馈");
+  });
+
+  $("#memorySearch").addEventListener("input", (event) => {
+    memorySearch = event.target.value;
+    renderMemories();
+  });
+
+  $("#memoryTypeFilter").addEventListener("change", (event) => {
+    memoryTypeFilter = event.target.value;
+    renderMemories();
   });
 
   $("#albumUpload").addEventListener("change", async (event) => {

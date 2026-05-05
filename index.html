@@ -127,6 +127,16 @@
                 物种 / 品种
                 <input name="species" type="text" required />
               </label>
+              <div class="form-grid">
+                <label>
+                  出生 / 领养日期
+                  <input name="birthday" type="date" />
+                </label>
+                <label>
+                  离世日期
+                  <input name="memorialDate" type="date" />
+                </label>
+              </div>
               <label>
                 上传照片
                 <input name="photo" type="file" accept="image/*" />
@@ -148,6 +158,10 @@
                 <textarea name="gestures" rows="3" placeholder="例如：开心时尾巴横着扫，困了会把头放在拖鞋旁。"></textarea>
               </label>
               <label>
+                常待的地方
+                <textarea name="favoritePlaces" rows="3" placeholder="例如：窗边垫子、门口地毯、你的书桌旁。"></textarea>
+              </label>
+              <label>
                 喜欢的东西
                 <textarea name="likes" rows="3" placeholder="例如：小黄球、晒太阳、被摸下巴。"></textarea>
               </label>
@@ -163,6 +177,10 @@
                 用户希望它如何陪伴
                 <textarea name="comfortStyle" rows="3" placeholder="例如：少讲道理，多描述动作；不要假装它真的回来了。"></textarea>
               </label>
+              <label>
+                你们之间最重要的一句话
+                <textarea name="story" rows="3" placeholder="例如：它陪我度过搬家后的第一年，每天晚上都会等我关灯。"></textarea>
+              </label>
               <button class="primary-button" type="submit">保存宠物画像</button>
             </form>
 
@@ -170,6 +188,7 @@
               <img id="profilePhoto" src="assets/momo.png" alt="宠物头像预览" />
               <h2 id="profileName">Momo</h2>
               <p id="profileSpecies">Golden Retriever</p>
+              <p id="profileDates">还没有填写纪念日期</p>
               <div class="status-row" id="profileTraits"></div>
               <div class="mini-list">
                 <h3>互动依据</h3>
@@ -218,7 +237,20 @@
               </div>
             </form>
 
-            <div class="timeline" id="memoryList"></div>
+            <section class="memory-panel">
+              <div class="memory-tools">
+                <input id="memorySearch" type="search" placeholder="搜索记忆关键词" aria-label="搜索记忆关键词" />
+                <select id="memoryTypeFilter" aria-label="按记忆类型筛选">
+                  <option value="全部">全部类型</option>
+                  <option value="日常">日常</option>
+                  <option value="照片">照片</option>
+                  <option value="声音">声音</option>
+                  <option value="视频">视频</option>
+                  <option value="纪念日">纪念日</option>
+                </select>
+              </div>
+              <div class="timeline" id="memoryList"></div>
+            </section>
           </div>
         </section>
 
@@ -279,6 +311,10 @@
                   <h3>删除本地资料</h3>
                   <p>如果你只是试用，可以一键恢复演示数据。正式产品里这里会变成彻底删除账号与宠物档案。</p>
                   <button class="ghost-button" id="resetDemoCare" type="button">恢复演示数据</button>
+                </div>
+                <div>
+                  <h3>给试用用户的任务</h3>
+                  <p>建议完成：补一份画像、写 2 条记忆、上传 1 张照片、聊 3 轮，并给每条 AI 回复点一次反馈。</p>
                 </div>
               </div>
             </section>

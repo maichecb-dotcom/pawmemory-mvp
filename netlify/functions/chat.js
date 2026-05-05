@@ -113,14 +113,18 @@ function buildInstructions(pet, memories) {
     "",
     `Pet name: ${pet.name}`,
     `Species/breed: ${pet.species}`,
+    `Birthday/adoption date: ${pet.birthday}`,
+    `Memorial date: ${pet.memorialDate}`,
     `Traits: ${pet.traits.join(", ") || "unknown"}`,
     `Habits: ${pet.habits}`,
     `Routine: ${pet.routine}`,
     `Gestures: ${pet.gestures}`,
+    `Favorite places: ${pet.favoritePlaces}`,
     `Likes: ${pet.likes}`,
     `Dislikes: ${pet.dislikes}`,
     `Preferred voice: ${pet.voice}`,
     `User comfort preference: ${pet.comfortStyle}`,
+    `Relationship story: ${pet.story}`,
     "",
     "Saved memories:",
     memories.length
@@ -173,14 +177,18 @@ function normalizePet(rawPet = {}) {
   return {
     name: sanitizeText(rawPet.name, 80) || "这只宠物",
     species: sanitizeText(rawPet.species, 80) || "宠物",
+    birthday: sanitizeText(rawPet.birthday, 40),
+    memorialDate: sanitizeText(rawPet.memorialDate, 40),
     traits: traits.map((trait) => sanitizeText(trait, 40)).filter(Boolean).slice(0, 8),
     habits: sanitizeText(rawPet.habits, 800),
     routine: sanitizeText(rawPet.routine, 600),
     gestures: sanitizeText(rawPet.gestures, 600),
+    favoritePlaces: sanitizeText(rawPet.favoritePlaces, 600),
     likes: sanitizeText(rawPet.likes, 500),
     dislikes: sanitizeText(rawPet.dislikes, 500),
     voice: sanitizeText(rawPet.voice, 500),
     comfortStyle: sanitizeText(rawPet.comfortStyle, 500),
+    story: sanitizeText(rawPet.story, 700),
   };
 }
 
