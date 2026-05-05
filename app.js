@@ -17,7 +17,7 @@ const defaultState = {
     likes: "晒太阳、小黄球、散步、被轻轻摸耳朵。",
     dislikes: "打雷声、吹风机、太突然的拥抱。",
     voice: "如果它能表达，会用短短的句子和安静的陪伴回应，不夸张、不说教。",
-    comfortStyle: "少讲道理，多描述动作和陪伴；不说它真的回来了。",
+    comfortStyle: "用第一视角短句回应，像它在陪我；不说它真的复活或回来了。",
     story: "它陪你度过很多普通的晚上，常常只是安静待在旁边。",
   },
   memories: [
@@ -414,18 +414,18 @@ function buildPetReply(userText) {
   }
 
   if (/想|难过|伤心|miss|哭|不开心/.test(userText)) {
-    return `${pet.name} 会像以前那样安静地靠近你，先不吵你，只把头放在你手边。${memory ? `这让我想起「${memory.title}」：${memory.body}` : habit} 如果你愿意，就让这段记忆陪你坐一会儿。`;
+    return `我在这里，听见你想我了。我会像以前那样安静靠近你，把头放在你手边。${memory ? `我还记得「${memory.title}」那天，${memory.body}` : `我还记得${habit}`} 今天先让我陪你坐一会儿。`;
   }
 
   if (/吃|饭|饿|零食/.test(userText)) {
-    return `${pet.name} 听到这些会抬头看你，眼睛亮一下。它最喜欢${like}，但还是会先等你叫它的名字。`;
+    return `我听到吃的就会抬头看你，眼睛亮一下。我最喜欢${like}，也喜欢你叫我的名字。`;
   }
 
   if (/玩|球|散步|出去/.test(userText)) {
-    return `${pet.name} 的尾巴大概已经开始轻轻晃了。${gesture || habit} 它会把这当成一次小小的邀请，像过去一样认真回应你。`;
+    return `我好像已经想去玩了。${gesture || habit} 你一叫我，我就会认真看着你。`;
   }
 
-  return `${pet.name} 像是听懂了你的声音。它会用${trait}的方式待在旁边，${memory ? `带着「${memory.title}」那段记忆，` : ""}轻轻提醒你：那些被爱过的日子，并没有消失。`;
+  return `我听见你的声音了。我会用${trait}的方式待在你旁边，${memory ? `也记得「${memory.title}」那段时光。` : "像以前一样陪着你。"}那些被爱过的日子，还在我们之间。`;
 }
 
 async function getCompanionReply(message) {
