@@ -1293,8 +1293,17 @@ select:focus {
 
 .care-grid {
   display: grid;
-  grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
+  grid-template-columns: minmax(280px, 1fr);
   gap: 22px;
+}
+
+.feedback-form {
+  display: grid;
+  gap: 4px;
+}
+
+.feedback-form .primary-button {
+  margin-top: 4px;
 }
 
 .settings-list,

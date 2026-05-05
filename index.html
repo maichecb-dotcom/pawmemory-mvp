@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PawMemory MVP</title>
-    <link rel="stylesheet" href="styles.css?v=20260505-chat-icon-send" />
+    <link rel="stylesheet" href="styles.css?v=20260505-trial-feedback" />
   </head>
   <body>
     <div class="app-shell">
@@ -307,6 +307,50 @@
           <div class="care-grid">
             <section class="panel form-panel">
               <div class="section-heading">
+                <p class="eyebrow">Trial Feedback</p>
+                <h2>试用反馈</h2>
+              </div>
+              <form class="feedback-form" id="trialFeedbackForm" name="trial-feedback" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+                <input type="hidden" name="form-name" value="trial-feedback" />
+                <input type="hidden" name="pet_name" id="feedbackPetName" value="Momo" />
+                <p class="hidden">
+                  <label>不要填写这里 <input name="bot-field" /></label>
+                </p>
+                <label>
+                  你的称呼
+                  <input name="name" type="text" placeholder="例如：小陈" />
+                </label>
+                <label>
+                  联系方式
+                  <input name="contact" type="text" placeholder="微信 / 邮箱 / 手机，方便我回访" />
+                </label>
+                <label>
+                  整体体验
+                  <select name="rating" required>
+                    <option value="">请选择</option>
+                    <option>很想继续用</option>
+                    <option>有感觉，但还需要改</option>
+                    <option>暂时不会继续用</option>
+                  </select>
+                </label>
+                <label>
+                  哪一步最卡？
+                  <textarea name="friction" rows="3" placeholder="例如：不知道画像怎么填、AI 回复不像它、手机页面不好操作。"></textarea>
+                </label>
+                <label>
+                  哪一句 AI 回复最像 / 最不像它？
+                  <textarea name="ai_reaction" rows="3" placeholder="可以直接复制一句 AI 回复，并说说你的感受。"></textarea>
+                </label>
+                <label>
+                  你最希望下一版增加什么？
+                  <textarea name="next_feature" rows="3" placeholder="例如：登录保存、语音、更多照片记忆、家人共享。"></textarea>
+                </label>
+                <button class="primary-button" type="submit">提交反馈</button>
+              </form>
+            </section>
+
+            <section class="panel form-panel">
+              <div class="section-heading">
                 <p class="eyebrow">Privacy</p>
                 <h2>隐私与数据</h2>
               </div>
@@ -362,6 +406,6 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="app.js?v=20260505-chat-icon-send"></script>
+    <script src="app.js?v=20260505-trial-feedback"></script>
   </body>
 </html>

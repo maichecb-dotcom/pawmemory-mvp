@@ -596,6 +596,10 @@ function exportData() {
   showToast("纪念资料已导出");
 }
 
+function encodeFormData(form) {
+  return new URLSearchParams(new FormData(form)).toString();
+}
+
 function bindEvents() {
   $$(".nav-item").forEach((button) => {
     button.addEventListener("click", () => setView(button.dataset.view));
@@ -795,6 +799,34 @@ function bindEvents() {
   $("#resetDemoCare").addEventListener("click", () => $("#resetDemo").click());
   $("#exportDataHome").addEventListener("click", exportData);
   $("#exportDataCare").addEventListener("click", exportData);
+
+  $("#trialFeedbackForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const submitButton = form.querySelector("button[type='submit']");
+    $("#feedbackPetName").value = state.pet.name || "";
+    submitButton.disabled = true;
+    submitButton.textContent = "提交中";
+
+    try {
+      const response = await fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: encodeFormData(form),
+      });
+
+      if (!response.ok) throw new Error(`Feedback submit failed: ${response.status}`);
+      form.reset();
+      $("#feedbackPetName").value = state.pet.name || "";
+      showToast("反馈已提交，谢谢你");
+    } catch (error) {
+      console.error(error);
+      showToast("提交失败，请稍后再试");
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = "提交反馈";
+    }
+  });
 
   $("#dismissOnboarding").addEventListener("click", () => {
     state.hasSeenOnboarding = true;
