@@ -11,13 +11,13 @@ exports.handler = async (event) => {
 
   if (AI_PROVIDER === "deepseek" && !process.env.DEEPSEEK_API_KEY) {
     return jsonResponse(500, {
-      error: "DEEPSEEK_API_KEY is not configured in Netlify environment variables.",
+      error: "DEEPSEEK_API_KEY is not configured in deployment environment variables.",
     });
   }
 
   if (AI_PROVIDER !== "deepseek" && !process.env.OPENAI_API_KEY) {
     return jsonResponse(500, {
-      error: "OPENAI_API_KEY is not configured in Netlify environment variables.",
+      error: "OPENAI_API_KEY is not configured in deployment environment variables.",
     });
   }
 

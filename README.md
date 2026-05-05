@@ -33,7 +33,7 @@ https://unrivaled-licorice-4881b7.netlify.app/
 
 ## 说明
 
-聊天页已经支持通过 Netlify Functions 调用大模型 API。若线上环境没有配置密钥，或本地直接打开 `index.html`，会自动回退到本地模拟回应，适合继续演示。
+聊天页已经支持通过 Vercel Functions 或 Netlify Functions 调用大模型 API。若线上环境没有配置密钥，或本地直接打开 `index.html`，会自动回退到本地模拟回应，适合继续演示。
 
 ## 接入 DeepSeek
 
@@ -41,17 +41,17 @@ https://unrivaled-licorice-4881b7.netlify.app/
 
 https://platform.deepseek.com/api_keys
 
-然后在 Netlify 后台配置环境变量：
+然后在 Vercel 后台配置环境变量：
 
-1. 打开当前站点
-2. 进入 `Site configuration`
-3. 找到 `Environment variables`
+1. 打开 Vercel 项目
+2. 进入 `Settings`
+3. 找到 `Environment Variables`
 4. 添加这些变量：
    - Key: `AI_PROVIDER`
    - Value: `deepseek`
    - Key: `DEEPSEEK_API_KEY`
    - Value: 你的 DeepSeek API key
-5. 保存后到 `Deploys` 里重新部署一次站点
+5. 保存后到 `Deployments` 里重新部署一次站点
 
 可选环境变量：
 
@@ -61,18 +61,39 @@ https://platform.deepseek.com/api_keys
 
 ## 接入 OpenAI
 
-如果以后要切回 OpenAI，在 Netlify 环境变量中配置：
+如果以后要切回 OpenAI，在 Vercel 环境变量中配置：
 
 - `AI_PROVIDER`: `openai`
 - `OPENAI_API_KEY`: 你的 OpenAI API key
 - `OPENAI_MODEL`: 默认是 `gpt-5.4-mini`
 
-## 正式部署路线
+## 用 Vercel 部署
 
-推荐使用：
+当前项目已经兼容 Vercel：
 
-1. GitHub 保存代码
-2. Netlify 连接 GitHub 仓库
-3. 每次推送到 `main` 分支后自动部署
+1. 打开 https://vercel.com
+2. 用 GitHub 登录
+3. 点击 `Add New...` -> `Project`
+4. 找到 GitHub 仓库 `pawmemory-mvp`
+5. 点击 `Import`
+6. Framework Preset 选择 `Other`
+7. Build Command 留空
+8. Output Directory 留空或保持默认
+9. Root Directory 保持项目根目录
+10. 展开 `Environment Variables`
+11. 添加：
+    - `AI_PROVIDER` = `deepseek`
+    - `DEEPSEEK_API_KEY` = 你的 DeepSeek API key
+12. 点击 `Deploy`
 
-Netlify 构建配置已经写在 `netlify.toml` 中。当前项目是静态站点，不需要构建命令，发布目录为项目根目录。
+部署成功后，Vercel 会给你一个 `*.vercel.app` 链接。以后每次推送到 GitHub 的 `main` 分支，Vercel 会自动重新部署。
+
+AI 接口在 Vercel 上的路径是：
+
+`/api/chat`
+
+## Netlify 旧部署
+
+项目里仍保留 `netlify.toml` 和 `netlify/functions/chat.js`，方便旧 Netlify 站点继续使用。但如果 Netlify 没有额度，推荐改用 Vercel。
+
+注意：`试用反馈` 表单之前使用的是 Netlify Forms。迁移到 Vercel 后，反馈收集建议改用 Tally、Formspree 或后续接入数据库。

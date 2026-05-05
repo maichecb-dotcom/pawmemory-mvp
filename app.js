@@ -471,7 +471,7 @@ async function getCompanionReply(message) {
   }
 
   try {
-    const response = await fetch("/.netlify/functions/chat", {
+    const response = await fetch("/api/chat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
