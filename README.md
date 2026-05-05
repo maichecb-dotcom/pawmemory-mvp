@@ -94,22 +94,11 @@ AI 接口在 Vercel 上的路径是：
 
 ## 收集用户试用反馈
 
-Vercel 不自带表单收件箱。当前项目已经内置一个试用问卷，并通过 `/api/feedback` 转发到 Formspree。
+当前项目在 `安心` 页面放了一个问卷星入口。用户完成试用后点击 `填写试用反馈问卷`，会跳转到问卷星：
 
-配置步骤：
+https://v.wjx.cn/vm/Q0eFAG1.aspx
 
-1. 打开 https://formspree.io
-2. 用你的邮箱注册/登录
-3. 创建一个新表单，例如命名为 `PawMemory Trial Feedback`
-4. 复制 Formspree 提供的 endpoint，格式通常类似：
-   `https://formspree.io/f/xxxxxxx`
-5. 打开 Vercel 项目
-6. 进入 `Settings` -> `Environment Variables`
-7. 添加：
-   - `FORMSPREE_ENDPOINT` = 你的 Formspree endpoint
-8. 保存后重新部署一次
-
-之后用户在 App 的 `安心` 页面提交问卷，你就能在 Formspree 后台看到，并可以开启邮件通知。
+反馈结果在问卷星后台查看，不需要额外配置 Vercel 环境变量。
 
 ## Netlify 旧部署
 

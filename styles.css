@@ -1297,13 +1297,19 @@ select:focus {
   gap: 22px;
 }
 
-.feedback-form {
+.survey-card {
   display: grid;
-  gap: 4px;
+  gap: 14px;
 }
 
-.feedback-form .primary-button {
-  margin-top: 4px;
+.survey-card p {
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.survey-link {
+  text-decoration: none;
 }
 
 .settings-list,

@@ -596,10 +596,6 @@ function exportData() {
   showToast("纪念资料已导出");
 }
 
-function formToObject(form) {
-  return Object.fromEntries(new FormData(form).entries());
-}
-
 function bindEvents() {
   $$(".nav-item").forEach((button) => {
     button.addEventListener("click", () => setView(button.dataset.view));
@@ -799,37 +795,6 @@ function bindEvents() {
   $("#resetDemoCare").addEventListener("click", () => $("#resetDemo").click());
   $("#exportDataHome").addEventListener("click", exportData);
   $("#exportDataCare").addEventListener("click", exportData);
-
-  $("#trialFeedbackForm").addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const submitButton = form.querySelector("button[type='submit']");
-    $("#feedbackPetName").value = state.pet.name || "";
-    $("#feedbackPageUrl").value = window.location.href;
-    submitButton.disabled = true;
-    submitButton.textContent = "提交中";
-
-    try {
-      const response = await fetch("/api/feedback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formToObject(form)),
-      });
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) throw new Error(data.error || `Feedback submit failed: ${response.status}`);
-      form.reset();
-      $("#feedbackPetName").value = state.pet.name || "";
-      $("#feedbackPageUrl").value = window.location.href;
-      showToast("反馈已提交，谢谢你");
-    } catch (error) {
-      console.error(error);
-      showToast("提交失败，请稍后再试");
-    } finally {
-      submitButton.disabled = false;
-      submitButton.textContent = "提交反馈";
-    }
-  });
 
   $("#dismissOnboarding").addEventListener("click", () => {
     state.hasSeenOnboarding = true;
