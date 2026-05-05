@@ -291,7 +291,8 @@ function setChatComposerLoading(isLoading) {
   fields.message.disabled = isLoading;
   const button = form.querySelector("[data-send-button]");
   button.disabled = isLoading;
-  button.textContent = isLoading ? "回应中" : "发送";
+  button.classList.toggle("is-loading", isLoading);
+  button.setAttribute("aria-label", isLoading ? "正在回应" : "发送消息");
 }
 
 function addPendingReply() {

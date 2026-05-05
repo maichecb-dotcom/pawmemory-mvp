@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PawMemory MVP</title>
-    <link rel="stylesheet" href="styles.css?v=20260505-hero-content-layer" />
+    <link rel="stylesheet" href="styles.css?v=20260505-chat-icon-send" />
   </head>
   <body>
     <div class="app-shell">
@@ -281,7 +281,9 @@
               <form class="chat-composer" id="chatForm">
                 <button class="composer-tool" data-jump="memories" type="button" aria-label="添加记忆">＋</button>
                 <input name="message" type="text" autocomplete="off" placeholder="对它说点什么..." required />
-                <button class="primary-button send-button" data-send-button type="submit">发送</button>
+                <button class="primary-button send-button" data-send-button type="submit" aria-label="发送消息">
+                  <span class="send-icon" aria-hidden="true">↑</span>
+                </button>
               </form>
             </section>
           </div>
@@ -360,6 +362,6 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="app.js?v=20260505-hero-content-layer"></script>
+    <script src="app.js?v=20260505-chat-icon-send"></script>
   </body>
 </html>

@@ -1207,8 +1207,40 @@ select:focus {
 }
 
 .send-button {
-  min-width: 58px;
-  padding: 0 16px;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.send-button:disabled {
+  opacity: 1;
+  cursor: wait;
+}
+
+.send-icon {
+  display: grid;
+  place-items: center;
+  transform: translateY(-1px);
+}
+
+.send-button.is-loading .send-icon {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.46);
+  border-top-color: white;
+  border-radius: 999px;
+  color: transparent;
+  animation: send-spin 760ms linear infinite;
+}
+
+@keyframes send-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .album-header {
@@ -1546,7 +1578,7 @@ select:focus {
   }
 
   .chat-composer {
-    grid-template-columns: 40px minmax(0, 1fr) 54px;
+    grid-template-columns: 40px minmax(0, 1fr) 44px;
     gap: 8px;
     padding: 10px;
   }
@@ -1557,9 +1589,11 @@ select:focus {
   }
 
   .send-button {
-    min-width: 54px;
-    min-height: 40px;
-    padding: 0 12px;
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
   }
 
   .today-memory-card {
