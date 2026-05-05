@@ -132,11 +132,32 @@ select {
 }
 
 .nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   width: 100%;
   padding: 13px 14px;
   color: var(--muted);
   background: transparent;
   text-align: left;
+}
+
+.nav-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: var(--sage-dark);
+  background: rgba(125, 161, 139, 0.12);
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.nav-label {
+  min-width: 0;
+  font-weight: 760;
 }
 
 .nav-item:hover,
@@ -221,6 +242,17 @@ select {
     white-space: normal;
     font-size: 12px;
     line-height: 1.15;
+  }
+
+  .nav-icon {
+    width: 24px;
+    height: 24px;
+    flex-basis: 24px;
+    font-size: 12px;
+  }
+
+  .nav-label {
+    font-size: 11px;
   }
 
   .topbar {
@@ -567,6 +599,51 @@ h3 {
   line-height: 1.7;
 }
 
+.today-memory-card {
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr);
+  gap: 14px;
+  margin-top: 16px;
+  padding: 10px;
+  border: 1px solid rgba(125, 161, 139, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 253, 250, 0.82);
+  box-shadow: 0 10px 24px rgba(63, 54, 42, 0.07);
+}
+
+.today-memory-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.today-memory-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.today-memory-head time {
+  flex: none;
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.today-memory-card p {
+  display: -webkit-box;
+  margin-bottom: 0;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
 .status-row {
   display: flex;
   flex-wrap: wrap;
@@ -805,6 +882,44 @@ select:focus {
   overflow: hidden;
 }
 
+.memory-visual-card {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  gap: 14px;
+  padding: 12px;
+}
+
+.memory-thumb {
+  display: grid;
+  place-items: center;
+  min-height: 126px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(125, 161, 139, 0.16), rgba(251, 236, 211, 0.9));
+}
+
+.memory-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.memory-thumb span {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  color: var(--sage-dark);
+  background: rgba(255, 253, 250, 0.72);
+  font-weight: 850;
+}
+
+.memory-card-body {
+  min-width: 0;
+  padding: 4px 4px 4px 0;
+}
+
 .timeline-card header {
   display: flex;
   justify-content: space-between;
@@ -960,11 +1075,34 @@ select:focus {
 
 .chat-composer {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 10px;
   padding: 14px;
   border-top: 1px solid var(--line);
   background: rgba(255, 253, 250, 0.92);
+}
+
+.composer-tool,
+.send-button {
+  border-radius: 999px;
+}
+
+.composer-tool {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  color: var(--sage-dark);
+  background: rgba(255, 253, 250, 0.8);
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.send-button {
+  min-width: 58px;
+  padding: 0 16px;
 }
 
 .album-header {
@@ -1226,6 +1364,14 @@ select:focus {
     padding: 16px;
   }
 
+  .memory-visual-card {
+    grid-template-columns: 104px minmax(0, 1fr);
+  }
+
+  .memory-thumb {
+    min-height: 116px;
+  }
+
   .toast {
     right: 14px;
     bottom: calc(86px + env(safe-area-inset-bottom));
@@ -1259,12 +1405,29 @@ select:focus {
     font-size: 32px;
   }
 
-  .chat-composer {
-    grid-template-columns: 1fr;
-  }
-
   .chat-message {
     max-width: 92%;
+  }
+
+  .chat-composer {
+    grid-template-columns: 40px minmax(0, 1fr) 54px;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .composer-tool {
+    width: 40px;
+    height: 40px;
+  }
+
+  .send-button {
+    min-width: 54px;
+    min-height: 40px;
+    padding: 0 12px;
+  }
+
+  .today-memory-card {
+    grid-template-columns: 94px minmax(0, 1fr);
   }
 
   .metrics-grid {

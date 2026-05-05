@@ -170,6 +170,8 @@ function renderHome() {
   $("#homePetName").textContent = pet.name;
   $("#homePetLine").textContent = `${pet.traits.slice(0, 3).join("、")}。${firstSentence(pet.habits)}`;
   $("#dailyGreeting").textContent = `晚上好，${pet.name} 在这里。`;
+  $("#dailyMemoryPhoto").src = pet.photo;
+  $("#dailyMemoryDate").textContent = latestMemory ? formatMemoryDate(latestMemory.date) : "今天";
   $("#dailyMemory").textContent = latestMemory
     ? latestMemory.body
     : "先保存一条记忆，AI 陪伴会更有它自己的样子。";
@@ -208,20 +210,29 @@ function renderMemories() {
 
   visibleMemories.forEach((memory) => {
     const card = document.createElement("article");
-    card.className = "timeline-card";
+    card.className = "timeline-card memory-visual-card";
     card.innerHTML = `
-      <header>
-        <div>
-          <p class="timeline-date">${escapeHtml(memory.date)}</p>
-          <h3>${escapeHtml(memory.title)}</h3>
-        </div>
-        <span class="type-badge">${escapeHtml(memory.type)}</span>
-      </header>
-      <p>${escapeHtml(memory.body)}</p>
-      <footer class="card-actions">
-        <button class="text-button" data-edit-memory="${memory.id}" type="button">编辑</button>
-        <button class="text-button danger" data-delete-memory="${memory.id}" type="button">删除</button>
-      </footer>
+      <div class="memory-thumb" aria-hidden="true">
+        ${
+          memory.type === "照片"
+            ? `<img src="${escapeHtml(state.pet.photo)}" alt="" />`
+            : `<span>${escapeHtml(getMemoryTypeIcon(memory.type))}</span>`
+        }
+      </div>
+      <div class="memory-card-body">
+        <header>
+          <div>
+            <p class="timeline-date">${escapeHtml(formatMemoryDate(memory.date))}</p>
+            <h3>${escapeHtml(memory.title)}</h3>
+          </div>
+          <span class="type-badge">${escapeHtml(memory.type)}</span>
+        </header>
+        <p>${escapeHtml(memory.body)}</p>
+        <footer class="card-actions">
+          <button class="text-button" data-edit-memory="${memory.id}" type="button">编辑</button>
+          <button class="text-button danger" data-delete-memory="${memory.id}" type="button">删除</button>
+        </footer>
+      </div>
     `;
     list.appendChild(card);
   });
@@ -284,7 +295,7 @@ function setChatComposerLoading(isLoading) {
   const form = $("#chatForm");
   const fields = form.elements;
   fields.message.disabled = isLoading;
-  const button = form.querySelector("button");
+  const button = form.querySelector("[data-send-button]");
   button.disabled = isLoading;
   button.textContent = isLoading ? "回应中" : "发送";
 }
@@ -389,6 +400,27 @@ function formatPetDates(pet) {
   if (pet.birthday) parts.push(`出生 / 领养：${pet.birthday}`);
   if (pet.memorialDate) parts.push(`纪念日：${pet.memorialDate}`);
   return parts.length ? parts.join(" · ") : "还没有填写纪念日期";
+}
+
+function formatMemoryDate(value) {
+  if (!value) return "今天";
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("zh-CN", {
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
+function getMemoryTypeIcon(type) {
+  const icons = {
+    日常: "记",
+    照片: "影",
+    声音: "声",
+    视频: "播",
+    纪念日: "念",
+  };
+  return icons[type] || "记";
 }
 
 function escapeHtml(value) {
