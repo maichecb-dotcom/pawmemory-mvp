@@ -31,6 +31,18 @@ body {
   letter-spacing: 0;
 }
 
+@media (min-width: 921px) {
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 30px;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(125, 161, 139, 0.18), transparent 34%),
+      var(--bg);
+  }
+}
+
 button,
 input,
 textarea,
@@ -48,6 +60,23 @@ select {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
   min-height: 100vh;
+}
+
+@media (min-width: 921px) {
+  .app-shell {
+    position: relative;
+    grid-template-columns: 1fr;
+    width: min(430px, calc(100vw - 32px));
+    min-height: min(860px, calc(100vh - 60px));
+    max-height: calc(100vh - 60px);
+    overflow: hidden;
+    border: 10px solid #111411;
+    border-radius: 38px;
+    background: var(--bg);
+    box-shadow:
+      0 34px 90px rgba(39, 48, 45, 0.22),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+  }
 }
 
 .sidebar {
@@ -141,6 +170,88 @@ select {
   width: min(1180px, 100%);
   margin: 0 auto;
   padding: 34px;
+}
+
+@media (min-width: 921px) {
+  .main {
+    width: 100%;
+    height: min(860px, calc(100vh - 60px));
+    margin: 0;
+    padding: 22px 18px 98px;
+    overflow: auto;
+    scrollbar-width: none;
+  }
+
+  .main::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sidebar {
+    position: absolute;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 20;
+    height: auto;
+    padding: 8px 12px 12px;
+    border-top: 1px solid var(--line);
+    border-right: 0;
+    background: rgba(255, 253, 250, 0.94);
+    box-shadow: 0 -10px 28px rgba(63, 54, 42, 0.1);
+  }
+
+  .brand,
+  .sidebar-note {
+    display: none;
+  }
+
+  .nav-list {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+  }
+
+  .nav-item {
+    display: grid;
+    place-items: center;
+    min-height: 48px;
+    padding: 6px 4px;
+    border-radius: 8px;
+    text-align: center;
+    white-space: normal;
+    font-size: 12px;
+    line-height: 1.15;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .topbar .eyebrow {
+    display: none;
+  }
+
+  h1 {
+    font-size: 30px;
+  }
+
+  h2 {
+    font-size: 21px;
+  }
+
+  .topbar-actions,
+  .button-row {
+    width: 100%;
+  }
+
+  .topbar-actions .ghost-button,
+  .button-row .primary-button,
+  .button-row .ghost-button {
+    flex: 1 1 0;
+  }
 }
 
 .topbar,
@@ -306,6 +417,32 @@ h3 {
   gap: 22px;
 }
 
+@media (min-width: 921px) {
+  .onboarding-card,
+  .hero-grid,
+  .split-layout,
+  .chat-layout,
+  .care-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .onboarding-card {
+    padding: 18px;
+  }
+
+  .onboarding-steps,
+  .form-grid,
+  .memory-tools {
+    grid-template-columns: 1fr;
+  }
+
+  .step-button {
+    min-height: 60px;
+    grid-template-columns: 28px 1fr;
+    align-items: center;
+  }
+}
+
 .pet-hero {
   position: relative;
   min-height: 420px;
@@ -313,6 +450,12 @@ h3 {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   background: var(--cream);
+}
+
+@media (min-width: 921px) {
+  .pet-hero {
+    min-height: 330px;
+  }
 }
 
 .pet-hero img,
@@ -383,6 +526,19 @@ h3 {
   padding: 34px;
 }
 
+@media (min-width: 921px) {
+  .daily-panel,
+  .form-panel,
+  .profile-preview,
+  .companion-card {
+    padding: 18px;
+  }
+
+  .daily-panel {
+    min-height: auto;
+  }
+}
+
 .daily-panel p {
   line-height: 1.7;
 }
@@ -411,6 +567,13 @@ h3 {
   grid-template-columns: repeat(3, 1fr);
   gap: 14px;
   margin-top: 18px;
+}
+
+@media (min-width: 921px) {
+  .metrics-grid,
+  .album-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .metric {
@@ -508,6 +671,12 @@ select:focus {
   align-self: start;
   position: sticky;
   top: 24px;
+}
+
+@media (min-width: 921px) {
+  .profile-preview {
+    position: static;
+  }
 }
 
 .profile-preview img,
@@ -619,6 +788,16 @@ select:focus {
   grid-template-rows: minmax(420px, 58vh) auto;
   padding: 0;
   overflow: hidden;
+}
+
+@media (min-width: 921px) {
+  .chat-panel {
+    grid-template-rows: minmax(420px, calc(100vh - 360px)) auto;
+  }
+
+  .chat-stream {
+    padding: 16px;
+  }
 }
 
 .chat-stream {
