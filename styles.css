@@ -1,5 +1,5 @@
 :root {
-  --bg: #f7f4ee;
+  --bg: #fbf7ef;
   --surface: #fffdfa;
   --surface-strong: #ffffff;
   --ink: #27302d;
@@ -10,7 +10,7 @@
   --coral: #d98a73;
   --cream: #fbecd3;
   --shadow: 0 22px 60px rgba(63, 54, 42, 0.12);
-  --radius: 8px;
+  --radius: 18px;
 }
 
 * {
@@ -177,7 +177,7 @@ select {
     width: 100%;
     height: min(860px, calc(100vh - 60px));
     margin: 0;
-    padding: 22px 18px 98px;
+    padding: 18px 16px 98px;
     overflow: auto;
     scrollbar-width: none;
   }
@@ -224,9 +224,9 @@ select {
   }
 
   .topbar {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 12px;
+    align-items: center;
+    flex-direction: row;
+    gap: 10px;
     margin-bottom: 16px;
   }
 
@@ -245,6 +245,16 @@ select {
   .topbar-actions,
   .button-row {
     width: 100%;
+  }
+
+  .topbar-actions {
+    justify-content: flex-end;
+  }
+
+  .topbar-actions .ghost-button {
+    min-height: 34px;
+    padding: 0 10px;
+    font-size: 12px;
   }
 
   .topbar-actions .ghost-button,
@@ -309,6 +319,12 @@ h3 {
   color: var(--ink);
   border: 1px solid var(--line);
   background: rgba(255, 253, 250, 0.72);
+}
+
+.paw-button::before {
+  content: "✦";
+  margin-right: 8px;
+  font-size: 13px;
 }
 
 .primary-button,
@@ -427,7 +443,8 @@ h3 {
   }
 
   .onboarding-card {
-    padding: 18px;
+    padding: 16px;
+    margin-bottom: 14px;
   }
 
   .onboarding-steps,
@@ -447,14 +464,14 @@ h3 {
   position: relative;
   min-height: 420px;
   overflow: hidden;
-  border-radius: var(--radius);
+  border-radius: 24px;
   box-shadow: var(--shadow);
   background: var(--cream);
 }
 
 @media (min-width: 921px) {
   .pet-hero {
-    min-height: 330px;
+    min-height: 360px;
   }
 }
 
@@ -476,7 +493,7 @@ h3 {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 40%, rgba(28, 29, 24, 0.68));
+  background: linear-gradient(180deg, rgba(28, 29, 24, 0.08), transparent 26%, rgba(28, 29, 24, 0.72));
 }
 
 .pet-hero-overlay {
@@ -498,7 +515,8 @@ h3 {
 
 .pet-hero-overlay h2 {
   margin-bottom: 6px;
-  font-size: 42px;
+  font-size: 46px;
+  letter-spacing: 0;
 }
 
 .pet-hero-overlay p {
@@ -513,7 +531,7 @@ h3 {
 .timeline-card,
 .album-card {
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: 18px;
   background: rgba(255, 253, 250, 0.88);
   box-shadow: 0 14px 38px rgba(63, 54, 42, 0.08);
 }
@@ -523,7 +541,7 @@ h3 {
   flex-direction: column;
   justify-content: center;
   min-height: 420px;
-  padding: 34px;
+  padding: 28px;
 }
 
 @media (min-width: 921px) {
@@ -536,6 +554,12 @@ h3 {
 
   .daily-panel {
     min-height: auto;
+    margin-top: -72px;
+    position: relative;
+    z-index: 2;
+    width: calc(100% - 22px);
+    justify-self: center;
+    backdrop-filter: blur(18px);
   }
 }
 
@@ -574,6 +598,15 @@ h3 {
   .album-grid {
     grid-template-columns: 1fr;
   }
+
+  .metrics-grid {
+    gap: 10px;
+  }
+
+  .metric {
+    min-height: 72px;
+    padding: 14px 16px;
+  }
 }
 
 .metric {
@@ -582,6 +615,31 @@ h3 {
   gap: 14px;
   min-height: 86px;
   padding: 16px 18px;
+}
+
+.profile-head,
+.chat-companion-head {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-head img,
+.chat-companion-head img {
+  width: 86px;
+  height: 86px;
+  margin: 0;
+  border-radius: 999px;
+}
+
+.chat-companion-head {
+  grid-template-columns: 54px 1fr;
+}
+
+.chat-companion-head img {
+  width: 54px;
+  height: 54px;
 }
 
 .metric-icon {
@@ -676,6 +734,11 @@ select:focus {
 @media (min-width: 921px) {
   .profile-preview {
     position: static;
+    order: -1;
+  }
+
+  .profile-preview .mini-list {
+    margin-top: 12px;
   }
 }
 
@@ -690,7 +753,7 @@ select:focus {
 .mini-list {
   margin-top: 18px;
   padding: 16px;
-  border-radius: var(--radius);
+  border-radius: 16px;
   background: rgba(251, 236, 211, 0.6);
 }
 
@@ -711,6 +774,21 @@ select:focus {
   gap: 14px;
 }
 
+@media (min-width: 921px) {
+  #memoriesView .memory-panel {
+    order: -1;
+  }
+
+  #memoriesView .form-panel {
+    margin-top: 8px;
+  }
+
+  .memory-tools {
+    padding: 10px;
+    border-radius: 999px;
+  }
+}
+
 .memory-tools {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 160px;
@@ -724,6 +802,7 @@ select:focus {
 
 .timeline-card {
   padding: 18px;
+  overflow: hidden;
 }
 
 .timeline-card header {
@@ -792,11 +871,19 @@ select:focus {
 
 @media (min-width: 921px) {
   .chat-panel {
-    grid-template-rows: minmax(420px, calc(100vh - 360px)) auto;
+    grid-template-rows: minmax(430px, calc(100vh - 330px)) auto;
   }
 
   .chat-stream {
     padding: 16px;
+  }
+
+  #chatView .companion-card {
+    padding: 14px 16px;
+  }
+
+  #chatView .companion-card .mini-list {
+    display: none;
   }
 }
 
@@ -811,7 +898,7 @@ select:focus {
 .chat-message {
   max-width: min(78%, 560px);
   padding: 13px 15px;
-  border-radius: var(--radius);
+  border-radius: 18px;
   line-height: 1.62;
 }
 
@@ -824,12 +911,14 @@ select:focus {
 .chat-message.user {
   align-self: flex-end;
   color: white;
-  background: var(--sage-dark);
+  background: #dfead7;
+  color: var(--ink);
 }
 
 .chat-message.pet {
   align-self: flex-start;
-  background: var(--cream);
+  background: var(--surface-strong);
+  box-shadow: 0 8px 24px rgba(63, 54, 42, 0.08);
 }
 
 .chat-message.pending {
@@ -875,7 +964,7 @@ select:focus {
   gap: 10px;
   padding: 14px;
   border-top: 1px solid var(--line);
-  background: rgba(255, 253, 250, 0.88);
+  background: rgba(255, 253, 250, 0.92);
 }
 
 .album-header {
@@ -1039,6 +1128,10 @@ select:focus {
     padding: 18px 14px calc(86px + env(safe-area-inset-bottom));
   }
 
+  .topbar .eyebrow {
+    display: none;
+  }
+
   .topbar,
   .album-header {
     align-items: flex-start;
@@ -1090,6 +1183,16 @@ select:focus {
     min-height: 300px;
   }
 
+  .daily-panel {
+    margin-top: -52px;
+    position: relative;
+    z-index: 2;
+    width: calc(100% - 20px);
+    justify-self: center;
+    min-height: auto;
+    backdrop-filter: blur(18px);
+  }
+
   .daily-panel,
   .form-panel,
   .profile-preview,
@@ -1104,6 +1207,15 @@ select:focus {
 
   .profile-preview {
     position: static;
+    order: -1;
+  }
+
+  #memoriesView .memory-panel {
+    order: -1;
+  }
+
+  #chatView .companion-card .mini-list {
+    display: none;
   }
 
   .chat-panel {
@@ -1140,15 +1252,11 @@ select:focus {
   }
 
   .pet-hero {
-    min-height: 260px;
+    min-height: 330px;
   }
 
   .pet-hero-overlay h2 {
     font-size: 32px;
-  }
-
-  .daily-panel {
-    min-height: auto;
   }
 
   .chat-composer {

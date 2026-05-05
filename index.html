@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PawMemory MVP</title>
-    <link rel="stylesheet" href="styles.css?v=20260505-app-shell" />
+    <link rel="stylesheet" href="styles.css?v=20260505-polished-app-ui" />
   </head>
   <body>
     <div class="app-shell">
@@ -80,7 +80,7 @@
               <p id="dailyMemory">还记得它最喜欢趴在窗边，阳光落在耳朵上的样子。</p>
               <div class="status-row" id="traitChips"></div>
               <div class="button-row">
-                <button class="primary-button" data-jump="chat" type="button">和它说说话</button>
+                <button class="primary-button paw-button" data-jump="chat" type="button">和它说说话</button>
                 <button class="ghost-button" id="exportDataHome" type="button">导出资料</button>
               </div>
             </section>
@@ -185,10 +185,14 @@
             </form>
 
             <aside class="profile-preview panel">
-              <img id="profilePhoto" src="assets/momo.png" alt="宠物头像预览" />
-              <h2 id="profileName">Momo</h2>
-              <p id="profileSpecies">Golden Retriever</p>
-              <p id="profileDates">还没有填写纪念日期</p>
+              <div class="profile-head">
+                <img id="profilePhoto" src="assets/momo.png" alt="宠物头像预览" />
+                <div>
+                  <h2 id="profileName">Momo</h2>
+                  <p id="profileSpecies">Golden Retriever</p>
+                  <p id="profileDates">还没有填写纪念日期</p>
+                </div>
+              </div>
               <div class="status-row" id="profileTraits"></div>
               <div class="mini-list">
                 <h3>互动依据</h3>
@@ -257,9 +261,13 @@
         <section class="view" id="chatView" aria-label="AI 陪伴">
           <div class="chat-layout">
             <aside class="panel companion-card">
-              <img id="chatPetPhoto" src="assets/momo.png" alt="宠物头像" />
-              <h2 id="chatPetName">Momo</h2>
-              <p id="chatHint">它会根据画像和记忆，用温柔的方式回应你。</p>
+              <div class="chat-companion-head">
+                <img id="chatPetPhoto" src="assets/momo.png" alt="宠物头像" />
+                <div>
+                  <h2 id="chatPetName">Momo</h2>
+                  <p id="chatHint">它会根据画像和记忆，用温柔的方式回应你。</p>
+                </div>
+              </div>
               <div class="mini-list">
                 <h3>安心边界</h3>
                 <p>AI 只做纪念式互动，不替代现实支持。你可以随时暂停、删除或导出资料。</p>
@@ -349,6 +357,6 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="app.js?v=20260505-app-shell"></script>
+    <script src="app.js?v=20260505-polished-app-ui"></script>
   </body>
 </html>
