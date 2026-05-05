@@ -596,8 +596,8 @@ function exportData() {
   showToast("纪念资料已导出");
 }
 
-function encodeFormData(form) {
-  return new URLSearchParams(new FormData(form)).toString();
+function formToObject(form) {
+  return Object.fromEntries(new FormData(form).entries());
 }
 
 function bindEvents() {
@@ -805,19 +805,22 @@ function bindEvents() {
     const form = event.currentTarget;
     const submitButton = form.querySelector("button[type='submit']");
     $("#feedbackPetName").value = state.pet.name || "";
+    $("#feedbackPageUrl").value = window.location.href;
     submitButton.disabled = true;
     submitButton.textContent = "提交中";
 
     try {
-      const response = await fetch("/", {
+      const response = await fetch("/api/feedback", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: encodeFormData(form),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formToObject(form)),
       });
+      const data = await response.json().catch(() => ({}));
 
-      if (!response.ok) throw new Error(`Feedback submit failed: ${response.status}`);
+      if (!response.ok) throw new Error(data.error || `Feedback submit failed: ${response.status}`);
       form.reset();
       $("#feedbackPetName").value = state.pet.name || "";
+      $("#feedbackPageUrl").value = window.location.href;
       showToast("反馈已提交，谢谢你");
     } catch (error) {
       console.error(error);

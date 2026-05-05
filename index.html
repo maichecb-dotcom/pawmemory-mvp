@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PawMemory MVP</title>
-    <link rel="stylesheet" href="styles.css?v=20260505-trial-feedback" />
+    <link rel="stylesheet" href="styles.css?v=20260505-feedback-survey" />
   </head>
   <body>
     <div class="app-shell">
@@ -310,12 +310,9 @@
                 <p class="eyebrow">Trial Feedback</p>
                 <h2>试用反馈</h2>
               </div>
-              <form class="feedback-form" id="trialFeedbackForm" name="trial-feedback" method="POST" data-netlify="true" netlify-honeypot="bot-field">
-                <input type="hidden" name="form-name" value="trial-feedback" />
+              <form class="feedback-form" id="trialFeedbackForm">
                 <input type="hidden" name="pet_name" id="feedbackPetName" value="Momo" />
-                <p class="hidden">
-                  <label>不要填写这里 <input name="bot-field" /></label>
-                </p>
+                <input type="hidden" name="page_url" id="feedbackPageUrl" value="" />
                 <label>
                   你的称呼
                   <input name="name" type="text" placeholder="例如：小陈" />
@@ -325,25 +322,96 @@
                   <input name="contact" type="text" placeholder="微信 / 邮箱 / 手机，方便我回访" />
                 </label>
                 <label>
-                  整体体验
-                  <select name="rating" required>
+                  你和宠物的关系
+                  <select name="user_type" required>
                     <option value="">请选择</option>
-                    <option>很想继续用</option>
-                    <option>有感觉，但还需要改</option>
-                    <option>暂时不会继续用</option>
+                    <option>现在正在养宠物</option>
+                    <option>曾经失去过宠物</option>
+                    <option>帮家人/朋友试用</option>
+                    <option>只是对产品感兴趣</option>
                   </select>
                 </label>
                 <label>
-                  哪一步最卡？
-                  <textarea name="friction" rows="3" placeholder="例如：不知道画像怎么填、AI 回复不像它、手机页面不好操作。"></textarea>
+                  第一眼能看懂这个产品是做什么的吗？
+                  <select name="first_impression" required>
+                    <option value="">请选择</option>
+                    <option>能，很清楚</option>
+                    <option>大概能看懂</option>
+                    <option>不太能看懂</option>
+                  </select>
+                </label>
+                <label>
+                  你愿意为自己的宠物填写画像吗？
+                  <select name="profile_willingness" required>
+                    <option value="">请选择</option>
+                    <option>愿意认真填写</option>
+                    <option>可以填，但希望更简单</option>
+                    <option>不太愿意填</option>
+                  </select>
+                </label>
+                <label>
+                  填写画像时，哪一项最难填？
+                  <textarea name="hardest_profile_field" rows="3" placeholder="例如：性格、习惯、关系故事、陪伴方式。"></textarea>
+                </label>
+                <label>
+                  你觉得“记忆”功能有用吗？
+                  <select name="memory_value" required>
+                    <option value="">请选择</option>
+                    <option>有用，会愿意继续记录</option>
+                    <option>一般，但可以理解</option>
+                    <option>没什么用</option>
+                  </select>
+                </label>
+                <label>
+                  AI 回复有没有让你感觉“像它”？
+                  <select name="ai_similarity" required>
+                    <option value="">请选择</option>
+                    <option>很像</option>
+                    <option>有一点像</option>
+                    <option>不像</option>
+                    <option>还没测试 AI</option>
+                  </select>
                 </label>
                 <label>
                   哪一句 AI 回复最像 / 最不像它？
-                  <textarea name="ai_reaction" rows="3" placeholder="可以直接复制一句 AI 回复，并说说你的感受。"></textarea>
+                  <textarea name="best_or_worst_reply" rows="3" placeholder="可以直接复制一句 AI 回复，并说说你的感受。"></textarea>
+                </label>
+                <label>
+                  有没有哪一刻让你觉得不舒服？
+                  <textarea name="uncomfortable_moment" rows="3" placeholder="例如：某句话太像人、太像复活、太煽情，或者隐私上不安心。"></textarea>
+                </label>
+                <label>
+                  你最喜欢当前哪个功能？
+                  <select name="favorite_feature">
+                    <option value="">请选择</option>
+                    <option>首页纪念卡</option>
+                    <option>宠物画像</option>
+                    <option>记忆记录</option>
+                    <option>AI 陪伴</option>
+                    <option>相册</option>
+                    <option>导出资料</option>
+                  </select>
+                </label>
+                <label>
+                  哪一步最让你想放弃？
+                  <textarea name="biggest_friction" rows="3" placeholder="例如：页面难用、表单太长、AI 不像、上传照片麻烦。"></textarea>
                 </label>
                 <label>
                   你最希望下一版增加什么？
                   <textarea name="next_feature" rows="3" placeholder="例如：登录保存、语音、更多照片记忆、家人共享。"></textarea>
+                </label>
+                <label>
+                  如果未来做成正式产品，你愿意付费吗？
+                  <select name="payment_intent">
+                    <option value="">请选择</option>
+                    <option>愿意</option>
+                    <option>看价格</option>
+                    <option>不愿意</option>
+                  </select>
+                </label>
+                <label>
+                  你对这个产品最真实的一句话评价
+                  <textarea name="final_comment" rows="3" placeholder="不用说好话，真实感受最重要。"></textarea>
                 </label>
                 <button class="primary-button" type="submit">提交反馈</button>
               </form>
@@ -406,6 +474,6 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="app.js?v=20260505-trial-feedback"></script>
+    <script src="app.js?v=20260505-feedback-survey"></script>
   </body>
 </html>
