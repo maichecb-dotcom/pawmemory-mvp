@@ -1295,7 +1295,43 @@ select:focus {
 }
 
 .album-card {
+  position: relative;
   overflow: hidden;
+  background: #b85b48;
+  touch-action: pan-y;
+}
+
+.album-delete {
+  position: absolute;
+  inset: 0 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 56px;
+  padding-right: 12px;
+  border: 0;
+  color: #fffdfa;
+  background: #b85b48;
+  font-size: 15px;
+  font-weight: 780;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.album-delete:hover {
+  background: #a94f3e;
+}
+
+.album-card-surface {
+  position: relative;
+  z-index: 1;
+  min-height: 100%;
+  background: #fffdfa;
+  transition: transform 180ms ease;
+}
+
+.album-card.swipe-open .album-card-surface {
+  transform: translateX(-56px);
 }
 
 .album-card img {
@@ -1303,7 +1339,7 @@ select:focus {
   aspect-ratio: 4 / 3;
 }
 
-.album-card div {
+.album-card-surface div {
   padding: 14px;
 }
 
@@ -1410,6 +1446,16 @@ select:focus {
 .settings-list .primary-button,
 .settings-list .ghost-button {
   margin-top: 12px;
+}
+
+.backup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.backup-actions input {
+  display: none;
 }
 
 .principle-list article {

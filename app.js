@@ -1,4 +1,5 @@
 const STORAGE_KEY = "pawmemory-mvp-v1";
+const LOCAL_UPDATED_AT_KEY = "pawmemory-mvp-v1-updated-at";
 const DEFAULT_PHOTO = "assets/momo.png";
 
 const defaultState = {
@@ -55,10 +56,13 @@ const defaultState = {
 };
 
 let state = loadState();
+let hasLocalState = Boolean(localStorage.getItem(STORAGE_KEY));
+let localUpdatedAt = localStorage.getItem(LOCAL_UPDATED_AT_KEY) || "";
 let editingMemoryId = null;
 let memorySearch = "";
 let memoryTypeFilter = "全部";
 let suppressCloudSync = false;
+let albumSwipe = null;
 
 const cloud = {
   client: null,
@@ -67,6 +71,7 @@ const cloud = {
   user: null,
   syncTimer: null,
   lastSyncedAt: "",
+  authMode: null,
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -77,7 +82,8 @@ function loadState() {
   if (!saved) return structuredClone(defaultState);
 
   try {
-    return normalizeAppState(JSON.parse(saved));
+    const parsed = normalizeAppState(JSON.parse(saved));
+    return getStateSignature(parsed) === getStateSignature(defaultState) ? structuredClone(defaultState) : parsed;
   } catch {
     return structuredClone(defaultState);
   }
@@ -105,16 +111,59 @@ function normalizeAppState(raw = {}) {
   return stateWithDefaults;
 }
 
-function saveState() {
+function saveState(options = {}) {
+  const { sync = true, touch = true, updatedAt = new Date().toISOString() } = options;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    if (!suppressCloudSync) scheduleCloudSync();
+    hasLocalState = true;
+    if (touch) {
+      localUpdatedAt = updatedAt;
+      localStorage.setItem(LOCAL_UPDATED_AT_KEY, localUpdatedAt);
+    }
+    if (sync && !suppressCloudSync) scheduleCloudSync();
     return true;
   } catch (error) {
     console.error("Failed to save local state:", error);
     showToast("保存失败：图片可能太大，请换一张较小的照片");
     return false;
   }
+}
+
+function getStateSignature(value = state) {
+  return JSON.stringify({
+    pet: {
+      name: value.pet?.name || "",
+      species: value.pet?.species || "",
+      photo: value.pet?.photo || "",
+      traits: value.pet?.traits || [],
+      birthday: value.pet?.birthday || "",
+      memorialDate: value.pet?.memorialDate || "",
+      habits: value.pet?.habits || "",
+      routine: value.pet?.routine || "",
+      gestures: value.pet?.gestures || "",
+      favoritePlaces: value.pet?.favoritePlaces || "",
+      likes: value.pet?.likes || "",
+      dislikes: value.pet?.dislikes || "",
+      voice: value.pet?.voice || "",
+      comfortStyle: value.pet?.comfortStyle || "",
+      story: value.pet?.story || "",
+    },
+    memories: (value.memories || []).map(({ title, date, type, body }) => ({ title, date, type, body })),
+    album: (value.album || []).map(({ src, caption }) => ({ src, caption })),
+    chat: (value.chat || []).map(({ role, text }) => ({ role, text })),
+  });
+}
+
+function hasMeaningfulLocalState() {
+  return hasLocalState && getStateSignature(state) !== getStateSignature(defaultState);
+}
+
+function isLocalNewerThanCloud(cloudUpdatedAt) {
+  if (!localUpdatedAt || !cloudUpdatedAt) return false;
+  const localTime = new Date(localUpdatedAt).getTime();
+  const cloudTime = new Date(cloudUpdatedAt).getTime();
+  if (Number.isNaN(localTime) || Number.isNaN(cloudTime)) return false;
+  return localTime > cloudTime + 2000;
 }
 
 function showToast(message) {
@@ -143,6 +192,60 @@ function renderAuthState() {
   authForm.classList.toggle("hidden", Boolean(cloud.user));
   accountActions.classList.toggle("hidden", !cloud.user);
   if (signedInEmail && cloud.user) signedInEmail.textContent = `已登录：${cloud.user.email || "当前账号"}`;
+  if (cloud.user) setAuthLoading(null);
+}
+
+function setAuthLoading(mode = null) {
+  cloud.authMode = mode;
+  const signInButton = $("#signInButton");
+  const signUpButton = $("#signUpButton");
+  if (!signInButton || !signUpButton) return;
+
+  signInButton.disabled = Boolean(mode);
+  signUpButton.disabled = Boolean(mode);
+  signInButton.textContent = mode === "signin" ? "登录中" : "登录";
+  signUpButton.textContent = mode === "signup" ? "注册中" : "注册";
+}
+
+function getAuthRedirectUrl() {
+  return `${window.location.origin}${window.location.pathname}`;
+}
+
+async function handleAuthCallback() {
+  if (!cloud.client) return null;
+
+  const query = new URLSearchParams(window.location.search);
+  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+  let callbackHandled = false;
+
+  if (query.get("error_description") || hash.get("error_description")) {
+    const message = query.get("error_description") || hash.get("error_description");
+    updateCloudStatus(`邮箱确认失败：${decodeURIComponent(message)}`, "error");
+    showToast("邮箱确认失败，请重新注册或登录");
+    callbackHandled = true;
+  }
+
+  if (query.get("code")) {
+    const { data, error } = await cloud.client.auth.exchangeCodeForSession(query.get("code"));
+    if (error) throw error;
+    callbackHandled = true;
+    return data.session || null;
+  }
+
+  if (hash.get("access_token") && hash.get("refresh_token")) {
+    const { data, error } = await cloud.client.auth.setSession({
+      access_token: hash.get("access_token"),
+      refresh_token: hash.get("refresh_token"),
+    });
+    if (error) throw error;
+    callbackHandled = true;
+    return data.session || null;
+  }
+
+  if (callbackHandled) {
+    history.replaceState({}, document.title, getAuthRedirectUrl());
+  }
+  return null;
 }
 
 async function setupCloud() {
@@ -175,8 +278,13 @@ async function setupCloud() {
     cloud.client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
     cloud.enabled = true;
     cloud.ready = true;
+    const callbackSession = await handleAuthCallback();
     const { data } = await cloud.client.auth.getSession();
-    cloud.user = data.session?.user || null;
+    if (callbackSession) {
+      history.replaceState({}, document.title, getAuthRedirectUrl());
+      showToast("邮箱已确认，账号已登录");
+    }
+    cloud.user = callbackSession?.user || data.session?.user || null;
     renderAuthState();
 
     cloud.client.auth.onAuthStateChange(async (_event, session) => {
@@ -218,9 +326,25 @@ async function loadCloudState() {
   if (error) throw error;
 
   if (data?.state) {
+    const cloudState = normalizeAppState(data.state);
+    const localHasNewerChanges =
+      hasMeaningfulLocalState() &&
+      isLocalNewerThanCloud(data.updated_at) &&
+      getStateSignature(state) !== getStateSignature(cloudState);
+
+    if (localHasNewerChanges) {
+      const shouldUploadLocal = window.confirm(
+        "检测到本机资料比云端更新。要用本机资料覆盖云端吗？\n\n选择“取消”会改为加载云端资料。",
+      );
+      if (shouldUploadLocal) {
+        await saveCloudState();
+        return;
+      }
+    }
+
     suppressCloudSync = true;
-    state = normalizeAppState(data.state);
-    saveState();
+    state = cloudState;
+    saveState({ sync: false, touch: true, updatedAt: data.updated_at });
     suppressCloudSync = false;
     renderAll();
     cloud.lastSyncedAt = formatSyncTime(data.updated_at);
@@ -228,11 +352,20 @@ async function loadCloudState() {
     return;
   }
 
-  await saveCloudState();
+  if (hasMeaningfulLocalState()) {
+    await saveCloudState();
+    return;
+  }
+
+  updateCloudStatus("云端暂无资料。请先创建宠物画像，保存后会自动同步。", "local");
 }
 
 async function saveCloudState() {
   if (!cloud.client || !cloud.user) return;
+  if (!hasMeaningfulLocalState()) {
+    updateCloudStatus("当前没有可同步的宠物资料", "local");
+    return;
+  }
   updateCloudStatus("正在同步云端", "syncing");
   const { error } = await cloud.client.from("pet_profiles").upsert(
     {
@@ -483,14 +616,28 @@ function renderAlbum() {
   state.album.forEach((item, index) => {
     const card = document.createElement("article");
     card.className = "album-card";
+    card.dataset.albumCard = item.id;
     card.innerHTML = `
-      <img src="${item.src}" alt="相册照片 ${index + 1}" />
-      <div>
-        <h3>${escapeHtml(item.caption || `${state.pet.name} 的照片`)}</h3>
-        <p>Memory ${String(index + 1).padStart(2, "0")}</p>
+      <button class="album-delete" data-delete-album="${item.id}" type="button" aria-label="删除这张照片">删</button>
+      <div class="album-card-surface" data-album-surface>
+        <img src="${item.src}" alt="相册照片 ${index + 1}" />
+        <div>
+          <h3>${escapeHtml(item.caption || `${state.pet.name} 的照片`)}</h3>
+          <p>Memory ${String(index + 1).padStart(2, "0")}</p>
+        </div>
       </div>
     `;
     grid.appendChild(card);
+  });
+}
+
+function closeAlbumSwipeCards(exceptCard = null) {
+  $$("[data-album-card]").forEach((card) => {
+    if (card !== exceptCard) {
+      card.classList.remove("swipe-open");
+      const surface = card.querySelector("[data-album-surface]");
+      if (surface) surface.style.transform = "";
+    }
   });
 }
 
@@ -840,8 +987,9 @@ function fileToDataUrl(file) {
 function exportData() {
   const exportPayload = {
     app: "PawMemory MVP",
+    version: 1,
     exportedAt: new Date().toISOString(),
-    note: "当前文件来自浏览器本地演示版，包含宠物画像、记忆、相册引用和聊天记录。",
+    note: "这是 PawMemory 数据备份文件，可用于恢复宠物画像、记忆、相册、聊天记录和反馈记录。",
     data: state,
   };
   const blob = new Blob([JSON.stringify(exportPayload, null, 2)], {
@@ -855,7 +1003,46 @@ function exportData() {
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
-  showToast("纪念资料已导出");
+  showToast("数据备份已导出");
+}
+
+function parseBackupPayload(rawText) {
+  const parsed = JSON.parse(rawText);
+  const candidate = parsed?.data || parsed;
+  if (!candidate || typeof candidate !== "object") {
+    throw new Error("Invalid backup file");
+  }
+
+  const restored = normalizeAppState(candidate);
+  if (!restored.pet || !Array.isArray(restored.memories) || !Array.isArray(restored.album)) {
+    throw new Error("Invalid backup shape");
+  }
+  return restored;
+}
+
+function importDataBackup(file) {
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const restored = parseBackupPayload(reader.result);
+      const shouldImport = window.confirm(
+        "导入数据备份会覆盖当前浏览器里的宠物资料、记忆、相册和聊天记录。\n\n确定要继续吗？",
+      );
+      if (!shouldImport) return;
+
+      state = restored;
+      saveState();
+      renderAll();
+      showToast("数据备份已导入");
+    } catch (error) {
+      console.error("Import backup failed:", error);
+      showToast("导入失败：请选择 PawMemory 数据备份 JSON");
+    }
+  };
+  reader.onerror = () => showToast("导入失败：文件读取失败");
+  reader.readAsText(file);
 }
 
 function bindEvents() {
@@ -869,6 +1056,7 @@ function bindEvents() {
 
   $("#authForm").addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (cloud.authMode) return;
     if (!cloud.enabled) {
       showToast("还没有配置云端服务");
       return;
@@ -880,20 +1068,24 @@ function bindEvents() {
       return;
     }
 
-    $("#signInButton").disabled = true;
-    $("#signInButton").textContent = "登录中";
-    const { error } = await cloud.client.auth.signInWithPassword({ email, password });
-    $("#signInButton").disabled = false;
-    $("#signInButton").textContent = "登录";
-
-    if (error) {
-      showToast(error.message.includes("Invalid") ? "邮箱或密码不正确" : "登录失败");
-      return;
+    setAuthLoading("signin");
+    try {
+      const { error } = await cloud.client.auth.signInWithPassword({ email, password });
+      if (error) {
+        showToast(error.message.includes("Invalid") ? "邮箱或密码不正确，或邮箱还未确认" : "登录失败");
+        return;
+      }
+      showToast("登录成功，正在同步资料");
+    } catch (error) {
+      console.error(error);
+      showToast("登录失败，请检查网络后重试");
+    } finally {
+      setAuthLoading(null);
     }
-    showToast("登录成功，正在同步资料");
   });
 
   $("#signUpButton").addEventListener("click", async () => {
+    if (cloud.authMode) return;
     if (!cloud.enabled) {
       showToast("还没有配置云端服务");
       return;
@@ -905,17 +1097,31 @@ function bindEvents() {
       return;
     }
 
-    $("#signUpButton").disabled = true;
-    $("#signUpButton").textContent = "注册中";
-    const { error } = await cloud.client.auth.signUp({ email, password });
-    $("#signUpButton").disabled = false;
-    $("#signUpButton").textContent = "注册";
-
-    if (error) {
-      showToast("注册失败，请检查邮箱或密码");
-      return;
+    setAuthLoading("signup");
+    try {
+      const { data, error } = await cloud.client.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: getAuthRedirectUrl(),
+        },
+      });
+      if (error) {
+        showToast("注册失败，请检查邮箱或密码");
+        return;
+      }
+      if (data.session) {
+        showToast("注册成功，正在同步资料");
+      } else {
+        updateCloudStatus("确认邮件已发送，请去邮箱点击确认链接", "syncing");
+        showToast("确认邮件已发送，请去邮箱点击链接");
+      }
+    } catch (error) {
+      console.error(error);
+      showToast("注册失败，请检查网络后重试");
+    } finally {
+      setAuthLoading(null);
     }
-    showToast("注册成功，请按提示确认邮箱后登录");
   });
 
   $("#signOutButton").addEventListener("click", async () => {
@@ -1147,6 +1353,70 @@ function bindEvents() {
     showToast("照片已加入相册");
   });
 
+  $("#albumGrid").addEventListener("click", (event) => {
+    const deleteButton = event.target.closest("[data-delete-album]");
+    if (!deleteButton) {
+      closeAlbumSwipeCards(event.target.closest("[data-album-card]"));
+      return;
+    }
+
+    const photo = state.album.find((item) => item.id === deleteButton.dataset.deleteAlbum);
+    const caption = photo?.caption || "这张照片";
+    const shouldDelete = window.confirm(`确定要删除「${caption}」吗？删除后可以重新上传。`);
+    if (!shouldDelete) return;
+
+    state.album = state.album.filter((item) => item.id !== deleteButton.dataset.deleteAlbum);
+    saveState();
+    renderAll();
+    showToast("照片已从相册删除");
+  });
+
+  $("#albumGrid").addEventListener("pointerdown", (event) => {
+    const surface = event.target.closest("[data-album-surface]");
+    if (!surface) return;
+
+    albumSwipe = {
+      card: surface.closest("[data-album-card]"),
+      surface,
+      startX: event.clientX,
+      startY: event.clientY,
+      currentX: event.clientX,
+      isHorizontal: false,
+    };
+    closeAlbumSwipeCards(albumSwipe.card);
+  });
+
+  $("#albumGrid").addEventListener("pointermove", (event) => {
+    if (!albumSwipe) return;
+
+    const deltaX = event.clientX - albumSwipe.startX;
+    const deltaY = event.clientY - albumSwipe.startY;
+    if (!albumSwipe.isHorizontal && Math.abs(deltaX) > 12 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      albumSwipe.isHorizontal = true;
+    }
+    if (!albumSwipe.isHorizontal) return;
+
+    event.preventDefault();
+    albumSwipe.currentX = event.clientX;
+    const offset = Math.max(-56, Math.min(0, deltaX));
+    albumSwipe.surface.style.transform = `translateX(${offset}px)`;
+  });
+
+  $("#albumGrid").addEventListener("pointerup", () => {
+    if (!albumSwipe) return;
+
+    const deltaX = albumSwipe.currentX - albumSwipe.startX;
+    albumSwipe.surface.style.transform = "";
+    albumSwipe.card.classList.toggle("swipe-open", deltaX < -48);
+    albumSwipe = null;
+  });
+
+  $("#albumGrid").addEventListener("pointercancel", () => {
+    if (!albumSwipe) return;
+    albumSwipe.surface.style.transform = "";
+    albumSwipe = null;
+  });
+
   $("#resetDemo").addEventListener("click", () => {
     state = structuredClone(defaultState);
     saveState();
@@ -1158,6 +1428,11 @@ function bindEvents() {
   $("#resetDemoCare").addEventListener("click", () => $("#resetDemo").click());
   $("#exportDataHome").addEventListener("click", exportData);
   $("#exportDataCare").addEventListener("click", exportData);
+  $("#importDataBackupButton").addEventListener("click", () => $("#importDataBackup").click());
+  $("#importDataBackup").addEventListener("change", (event) => {
+    importDataBackup(event.target.files?.[0]);
+    event.target.value = "";
+  });
 
   $("#dismissOnboarding").addEventListener("click", () => {
     state.hasSeenOnboarding = true;
