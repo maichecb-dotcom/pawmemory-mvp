@@ -58,6 +58,16 @@ let state = loadState();
 let editingMemoryId = null;
 let memorySearch = "";
 let memoryTypeFilter = "全部";
+let suppressCloudSync = false;
+
+const cloud = {
+  client: null,
+  enabled: false,
+  ready: false,
+  user: null,
+  syncTimer: null,
+  lastSyncedAt: "",
+};
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
@@ -67,29 +77,38 @@ function loadState() {
   if (!saved) return structuredClone(defaultState);
 
   try {
-    const parsed = JSON.parse(saved);
-    const stateWithDefaults = {
-      ...structuredClone(defaultState),
-      ...parsed,
-      pet: {
-        ...structuredClone(defaultState).pet,
-        ...(parsed.pet || {}),
-      },
-    };
-    stateWithDefaults.chat = (stateWithDefaults.chat || []).map((message) => ({
-      id: message.id || crypto.randomUUID(),
-      ...message,
-    }));
-    stateWithDefaults.feedback = stateWithDefaults.feedback || {};
-    return stateWithDefaults;
+    return normalizeAppState(JSON.parse(saved));
   } catch {
     return structuredClone(defaultState);
   }
 }
 
+function normalizeAppState(raw = {}) {
+  const stateWithDefaults = {
+    ...structuredClone(defaultState),
+    ...raw,
+    pet: {
+      ...structuredClone(defaultState).pet,
+      ...(raw.pet || {}),
+    },
+  };
+  stateWithDefaults.memories = (stateWithDefaults.memories || []).map((memory) => ({
+    id: memory.id || crypto.randomUUID(),
+    ...memory,
+  }));
+  stateWithDefaults.album = stateWithDefaults.album || [];
+  stateWithDefaults.chat = (stateWithDefaults.chat || []).map((message) => ({
+    id: message.id || crypto.randomUUID(),
+    ...message,
+  }));
+  stateWithDefaults.feedback = stateWithDefaults.feedback || {};
+  return stateWithDefaults;
+}
+
 function saveState() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (!suppressCloudSync) scheduleCloudSync();
     return true;
   } catch (error) {
     console.error("Failed to save local state:", error);
@@ -103,6 +122,137 @@ function showToast(message) {
   toast.textContent = message;
   toast.classList.add("show");
   setTimeout(() => toast.classList.remove("show"), 2200);
+}
+
+function updateCloudStatus(message, tone = "local") {
+  const text = $("#cloudStatusText");
+  const badge = $("#syncStatusBadge");
+  if (text) text.textContent = message;
+  if (badge) {
+    badge.textContent = tone === "synced" && cloud.lastSyncedAt ? `已同步 ${cloud.lastSyncedAt}` : message;
+    badge.dataset.tone = tone;
+  }
+}
+
+function renderAuthState() {
+  const authForm = $("#authForm");
+  const accountActions = $("#accountActions");
+  const signedInEmail = $("#signedInEmail");
+  if (!authForm || !accountActions) return;
+
+  authForm.classList.toggle("hidden", Boolean(cloud.user));
+  accountActions.classList.toggle("hidden", !cloud.user);
+  if (signedInEmail && cloud.user) signedInEmail.textContent = `已登录：${cloud.user.email || "当前账号"}`;
+}
+
+async function setupCloud() {
+  if (window.location.protocol === "file:") {
+    updateCloudStatus("本地预览模式，云端同步上线后可用", "local");
+    renderAuthState();
+    return;
+  }
+
+  if (!window.supabase?.createClient) {
+    updateCloudStatus("云端组件加载失败，当前使用本地保存", "error");
+    renderAuthState();
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/config");
+    if (!response.ok) {
+      updateCloudStatus("本地预览模式，云端同步发布后可用", "local");
+      renderAuthState();
+      return;
+    }
+    const config = await response.json();
+    if (!config.supabaseUrl || !config.supabaseAnonKey) {
+      updateCloudStatus("尚未配置 Supabase，当前使用本地保存", "local");
+      renderAuthState();
+      return;
+    }
+
+    cloud.client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+    cloud.enabled = true;
+    cloud.ready = true;
+    const { data } = await cloud.client.auth.getSession();
+    cloud.user = data.session?.user || null;
+    renderAuthState();
+
+    cloud.client.auth.onAuthStateChange(async (_event, session) => {
+      cloud.user = session?.user || null;
+      renderAuthState();
+      if (cloud.user) await loadCloudState();
+      else updateCloudStatus("已退出登录，当前资料只保存在本机", "local");
+    });
+
+    if (cloud.user) await loadCloudState();
+    else updateCloudStatus("可登录账号开启云端同步", "local");
+  } catch (error) {
+    console.error("Cloud setup failed:", error);
+    updateCloudStatus("云端初始化失败，当前使用本地保存", "error");
+    renderAuthState();
+  }
+}
+
+function scheduleCloudSync() {
+  if (!cloud.enabled || !cloud.user) return;
+  clearTimeout(cloud.syncTimer);
+  cloud.syncTimer = setTimeout(() => {
+    saveCloudState().catch((error) => {
+      console.error("Cloud sync failed:", error);
+      updateCloudStatus("云端同步失败，稍后可重试", "error");
+    });
+  }, 650);
+}
+
+async function loadCloudState() {
+  if (!cloud.client || !cloud.user) return;
+  updateCloudStatus("正在读取云端资料", "syncing");
+  const { data, error } = await cloud.client
+    .from("pet_profiles")
+    .select("state, updated_at")
+    .eq("user_id", cloud.user.id)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  if (data?.state) {
+    suppressCloudSync = true;
+    state = normalizeAppState(data.state);
+    saveState();
+    suppressCloudSync = false;
+    renderAll();
+    cloud.lastSyncedAt = formatSyncTime(data.updated_at);
+    updateCloudStatus("云端资料已加载", "synced");
+    return;
+  }
+
+  await saveCloudState();
+}
+
+async function saveCloudState() {
+  if (!cloud.client || !cloud.user) return;
+  updateCloudStatus("正在同步云端", "syncing");
+  const { error } = await cloud.client.from("pet_profiles").upsert(
+    {
+      user_id: cloud.user.id,
+      state,
+    },
+    { onConflict: "user_id" },
+  );
+  if (error) throw error;
+  cloud.lastSyncedAt = formatSyncTime(new Date().toISOString());
+  updateCloudStatus("云端资料已同步", "synced");
+}
+
+function formatSyncTime(value) {
+  const date = value ? new Date(value) : new Date();
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("zh-CN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
 }
 
 function splitTags(value) {
@@ -386,6 +536,93 @@ function resetMemoryForm() {
   $("#cancelMemoryEdit").classList.add("hidden");
 }
 
+function applyProfileDraft(draft) {
+  const fields = $("#profileForm").elements;
+  const values = {
+    name: draft.name,
+    species: draft.species,
+    traits: Array.isArray(draft.traits) ? draft.traits.join(", ") : draft.traits,
+    habits: draft.habits,
+    routine: draft.routine,
+    gestures: draft.gestures,
+    favoritePlaces: draft.favoritePlaces,
+    likes: draft.likes,
+    dislikes: draft.dislikes,
+    voice: draft.voice,
+    comfortStyle: draft.comfortStyle,
+    story: draft.story,
+  };
+
+  Object.entries(values).forEach(([key, value]) => {
+    if (fields[key] && value) fields[key].value = value;
+  });
+}
+
+function buildLocalProfileDraft(story) {
+  const knownTraits = [
+    "温柔",
+    "粘人",
+    "爱玩",
+    "胆小",
+    "好奇",
+    "安静",
+    "活泼",
+    "贪吃",
+    "爱晒太阳",
+    "聪明",
+    "撒娇",
+  ];
+  const traits = knownTraits.filter((trait) => story.includes(trait)).slice(0, 6);
+  const nameMatch = story.match(/(?:叫|名字叫|名叫)\s*([^，。,、\s]{1,12})/);
+  const speciesMatch = story.match(/(猫|狗|金毛|拉布拉多|柯基|柴犬|布偶|英短|美短|田园猫|贵宾|比熊)/);
+  const likeMatch = story.match(/(?:喜欢|爱吃|爱玩|最爱)\s*([^。！？\n]{2,80})/);
+  const dislikeMatch = story.match(/(?:害怕|不喜欢|讨厌)\s*([^。！？\n]{2,80})/);
+  const placeMatch = story.match(/(?:喜欢待在|常待在|经常在|睡在|趴在)\s*([^。！？\n]{2,80})/);
+
+  return {
+    name: nameMatch?.[1] || "",
+    species: speciesMatch?.[1] || "",
+    traits: traits.length ? traits : ["温柔", "爱陪伴"],
+    habits: firstSentence(story) || story.slice(0, 120),
+    routine: "",
+    gestures: /尾巴|耳朵|蹭|舔|叼|叫|跑|趴/.test(story) ? firstSentence(story) : "",
+    favoritePlaces: placeMatch?.[1] || "",
+    likes: likeMatch?.[1] || "",
+    dislikes: dislikeMatch?.[1] || "",
+    voice: "短句、简单、像它在身边回应，不说复杂的话。",
+    comfortStyle: "用第一视角温柔回应，引用它的习惯和记忆，不宣称复活。",
+    story,
+  };
+}
+
+async function generateProfileDraft(story) {
+  if (window.location.protocol === "file:") {
+    return {
+      draft: buildLocalProfileDraft(story),
+      source: "local",
+    };
+  }
+
+  try {
+    const response = await fetch("/api/profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ story }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.draft) {
+      throw new Error(data.error || "Profile extraction failed");
+    }
+    return { draft: data.draft, source: "ai" };
+  } catch (error) {
+    console.warn("Falling back to local profile draft:", error);
+    return {
+      draft: buildLocalProfileDraft(story),
+      source: "fallback",
+    };
+  }
+}
+
 function firstSentence(text) {
   return (text || "").split(/[。.!！?？]/).filter(Boolean)[0] || "";
 }
@@ -441,6 +678,7 @@ function buildPetReply(userText) {
   const habit = firstSentence(pet.habits);
   const like = firstSentence(pet.likes);
   const gesture = firstSentence(pet.gestures);
+  const place = firstSentence(pet.favoritePlaces);
   const lower = userText.toLowerCase();
 
   if (/自杀|不想活|活不下去|伤害自己|suicide|kill myself/.test(lower)) {
@@ -448,18 +686,42 @@ function buildPetReply(userText) {
   }
 
   if (/想|难过|伤心|miss|哭|不开心/.test(userText)) {
-    return `我在这里，听见你想我了。我会像以前那样安静靠近你，把头放在你手边。${memory ? `我还记得「${memory.title}」那天，${memory.body}` : `我还记得${habit}`} 今天先让我陪你坐一会儿。`;
+    return shortPetReply([
+      "我听见你想我了。",
+      habit ? `我记得${habit}。` : place ? `我记得${place}。` : "我会靠近你一点。",
+      "今天先慢慢陪你一会儿。",
+    ]);
   }
 
   if (/吃|饭|饿|零食/.test(userText)) {
-    return `我听到吃的就会抬头看你，眼睛亮一下。我最喜欢${like}，也喜欢你叫我的名字。`;
+    return shortPetReply([
+      like ? `我记得我喜欢${like}。` : "我一听到吃的就会抬头。",
+      "你叫我名字的时候，我会看着你。",
+    ]);
   }
 
   if (/玩|球|散步|出去/.test(userText)) {
-    return `我好像已经想去玩了。${gesture || habit} 你一叫我，我就会认真看着你。`;
+    return shortPetReply([
+      "我想跟你一起玩。",
+      gesture || habit ? `${gesture || habit}。` : "你一叫我，我就会看向你。",
+      trait ? `我还是那个${trait}的我。` : "",
+    ]);
   }
 
-  return `我听见你的声音了。我会用${trait}的方式待在你旁边，${memory ? `也记得「${memory.title}」那段时光。` : "像以前一样陪着你。"}那些被爱过的日子，还在我们之间。`;
+  return shortPetReply([
+    "我听见你说话了。",
+    memory ? `我记得「${memory.title}」那天。` : habit ? `我记得${habit}。` : "我会安静待在你身边。",
+    like ? `也记得${like}。` : "",
+  ]);
+}
+
+function shortPetReply(lines) {
+  return lines
+    .filter(Boolean)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 3)
+    .join("");
 }
 
 async function getCompanionReply(message) {
@@ -603,6 +865,107 @@ function bindEvents() {
 
   $$("[data-jump]").forEach((button) => {
     button.addEventListener("click", () => setView(button.dataset.jump));
+  });
+
+  $("#authForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!cloud.enabled) {
+      showToast("还没有配置云端服务");
+      return;
+    }
+    const email = $("#authEmail").value.trim();
+    const password = $("#authPassword").value;
+    if (!email || !password) {
+      showToast("请输入邮箱和密码");
+      return;
+    }
+
+    $("#signInButton").disabled = true;
+    $("#signInButton").textContent = "登录中";
+    const { error } = await cloud.client.auth.signInWithPassword({ email, password });
+    $("#signInButton").disabled = false;
+    $("#signInButton").textContent = "登录";
+
+    if (error) {
+      showToast(error.message.includes("Invalid") ? "邮箱或密码不正确" : "登录失败");
+      return;
+    }
+    showToast("登录成功，正在同步资料");
+  });
+
+  $("#signUpButton").addEventListener("click", async () => {
+    if (!cloud.enabled) {
+      showToast("还没有配置云端服务");
+      return;
+    }
+    const email = $("#authEmail").value.trim();
+    const password = $("#authPassword").value;
+    if (!email || password.length < 6) {
+      showToast("请输入邮箱和至少 6 位密码");
+      return;
+    }
+
+    $("#signUpButton").disabled = true;
+    $("#signUpButton").textContent = "注册中";
+    const { error } = await cloud.client.auth.signUp({ email, password });
+    $("#signUpButton").disabled = false;
+    $("#signUpButton").textContent = "注册";
+
+    if (error) {
+      showToast("注册失败，请检查邮箱或密码");
+      return;
+    }
+    showToast("注册成功，请按提示确认邮箱后登录");
+  });
+
+  $("#signOutButton").addEventListener("click", async () => {
+    if (!cloud.client) return;
+    await cloud.client.auth.signOut();
+    cloud.user = null;
+    renderAuthState();
+    updateCloudStatus("已退出登录，当前资料只保存在本机", "local");
+    showToast("已退出登录");
+  });
+
+  $("#cloudSyncNow").addEventListener("click", async () => {
+    if (!cloud.enabled || !cloud.user) {
+      showToast("请先登录账号");
+      return;
+    }
+    try {
+      await saveCloudState();
+      showToast("云端资料已同步");
+    } catch (error) {
+      console.error(error);
+      showToast("同步失败，请稍后再试");
+    }
+  });
+
+  $("#generateProfileDraft").addEventListener("click", async () => {
+    const storyInput = $("#profileStoryInput");
+    const story = storyInput.value.trim();
+    if (!story) {
+      showToast("先讲讲它的名字、性格或习惯");
+      storyInput.focus();
+      return;
+    }
+
+    const button = $("#generateProfileDraft");
+    button.disabled = true;
+    button.textContent = "整理中";
+
+    const { draft, source } = await generateProfileDraft(story);
+    applyProfileDraft(draft);
+    button.disabled = false;
+    button.textContent = "AI 帮我整理画像";
+
+    if (source === "local") {
+      showToast("已用本地规则整理，保存前可以再改一改");
+    } else if (source === "fallback") {
+      showToast("AI 暂时不可用，已用本地规则整理");
+    } else {
+      showToast("画像草稿已整理，请检查后保存");
+    }
   });
 
   $("#profileForm").addEventListener("submit", async (event) => {
@@ -807,6 +1170,7 @@ function init() {
   $("#memoryForm").elements.date.valueAsDate = new Date();
   bindEvents();
   renderAll();
+  setupCloud();
 }
 
 init();

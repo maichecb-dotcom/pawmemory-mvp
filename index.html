@@ -120,6 +120,19 @@
                 <p class="eyebrow">Pet Profile</p>
                 <h2>建立它的画像</h2>
               </div>
+              <section class="quick-profile-panel">
+                <div>
+                  <p class="eyebrow">Quick Story</p>
+                  <h3>不想慢慢填？先讲讲它</h3>
+                  <p>可以直接打字，也可以用手机键盘的语音输入。AI 会先帮你整理成画像，下面字段还能继续手动修改。</p>
+                </div>
+                <textarea
+                  id="profileStoryInput"
+                  rows="5"
+                  placeholder="例如：它叫大脸，是一只猫，很爱晒太阳，听到钥匙声会跑到门口，晚上喜欢靠在我的腿边，开心时会叼来小黄球..."
+                ></textarea>
+                <button class="ghost-button" id="generateProfileDraft" type="button">AI 帮我整理画像</button>
+              </section>
 
               <label>
                 宠物名字
@@ -307,6 +320,38 @@
           <div class="care-grid">
             <section class="panel form-panel">
               <div class="section-heading">
+                <p class="eyebrow">Account</p>
+                <h2>账号与云端同步</h2>
+              </div>
+              <div class="account-panel">
+                <p id="cloudStatusText">当前仍使用本地保存。配置云端后，登录即可在多台设备同步资料。</p>
+                <span class="sync-badge" id="syncStatusBadge">本地模式</span>
+                <form class="auth-form" id="authForm">
+                  <label>
+                    邮箱
+                    <input id="authEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" />
+                  </label>
+                  <label>
+                    密码
+                    <input id="authPassword" name="password" type="password" autocomplete="current-password" placeholder="至少 6 位" />
+                  </label>
+                  <div class="button-row">
+                    <button class="primary-button" id="signInButton" type="submit">登录</button>
+                    <button class="ghost-button" id="signUpButton" type="button">注册</button>
+                  </div>
+                </form>
+                <div class="account-actions hidden" id="accountActions">
+                  <p id="signedInEmail">已登录</p>
+                  <div class="button-row">
+                    <button class="primary-button" id="cloudSyncNow" type="button">立即同步</button>
+                    <button class="ghost-button" id="signOutButton" type="button">退出登录</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel form-panel">
+              <div class="section-heading">
                 <p class="eyebrow">Trial Feedback</p>
                 <h2>试用反馈</h2>
               </div>
@@ -326,7 +371,7 @@
               <div class="settings-list">
                 <div>
                   <h3>当前保存位置</h3>
-                  <p>这个演示版的数据只保存在你的浏览器 localStorage 中，还没有上传到服务器。</p>
+                  <p>未登录时资料保存在本机浏览器；登录后会同步到你的云端账号，方便换设备继续使用。</p>
                 </div>
                 <div>
                   <h3>导出纪念资料</h3>
@@ -375,6 +420,7 @@
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="app.js?v=20260505-wjx-feedback"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js?v=20260506-cloud-sync"></script>
   </body>
 </html>

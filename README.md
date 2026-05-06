@@ -92,6 +92,29 @@ AI 接口在 Vercel 上的路径是：
 
 `/api/chat`
 
+## 登录与云端同步
+
+当前项目已经预留 Supabase 登录和云端同步。第一版云端会把整份 App 数据保存为一个 JSON 档案，包含宠物画像、记忆、相册元数据、聊天记录和反馈按钮记录。
+
+配置步骤：
+
+1. 打开 https://supabase.com
+2. 创建一个新项目
+3. 进入 `SQL Editor`
+4. 复制并运行 `supabase/schema.sql`
+5. 进入 `Project Settings` -> `API`
+6. 复制：
+   - `Project URL`
+   - `anon public key`
+7. 打开 Vercel 项目
+8. 进入 `Settings` -> `Environment Variables`
+9. 添加：
+   - `SUPABASE_URL` = Supabase Project URL
+   - `SUPABASE_ANON_KEY` = Supabase anon public key
+10. 保存后重新部署
+
+本地直接打开 `index.html` 时仍然是本地预览模式，不会连接云端。
+
 ## 收集用户试用反馈
 
 当前项目在 `安心` 页面放了一个问卷星入口。用户完成试用后点击 `填写试用反馈问卷`，会跳转到问卷星：
