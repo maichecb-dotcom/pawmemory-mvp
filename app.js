@@ -27,6 +27,7 @@ const defaultState = {
       title: "窗边的下午",
       date: "2024-05-18",
       type: "照片",
+      photo: DEFAULT_PHOTO,
       body: "Momo 喜欢趴在窗边睡觉，阳光会落在耳朵上。你一走近，它会慢慢睁眼，然后把尾巴轻轻扫两下。",
     },
     {
@@ -34,6 +35,7 @@ const defaultState = {
       title: "听见钥匙声",
       date: "2023-11-02",
       type: "日常",
+      photo: "",
       body: "每次你回家开门前，它都会先跑到门口等，嘴里常常叼着那个有点旧的小黄球。",
     },
   ],
@@ -100,6 +102,7 @@ function normalizeAppState(raw = {}) {
   };
   stateWithDefaults.memories = (stateWithDefaults.memories || []).map((memory) => ({
     id: memory.id || crypto.randomUUID(),
+    photo: "",
     ...memory,
   }));
   stateWithDefaults.album = stateWithDefaults.album || [];
@@ -148,7 +151,13 @@ function getStateSignature(value = state) {
       comfortStyle: value.pet?.comfortStyle || "",
       story: value.pet?.story || "",
     },
-    memories: (value.memories || []).map(({ title, date, type, body }) => ({ title, date, type, body })),
+    memories: (value.memories || []).map(({ title, date, type, body, photo }) => ({
+      title,
+      date,
+      type,
+      body,
+      photo: photo || "",
+    })),
     album: (value.album || []).map(({ src, caption }) => ({ src, caption })),
     chat: (value.chat || []).map(({ role, text }) => ({ role, text })),
   });
@@ -488,11 +497,12 @@ function renderMemories() {
   visibleMemories.forEach((memory) => {
     const card = document.createElement("article");
     card.className = "timeline-card memory-visual-card";
+    const memoryPhoto = memory.photo || (memory.type === "照片" ? state.pet.photo : "");
     card.innerHTML = `
       <div class="memory-thumb" aria-hidden="true">
         ${
-          memory.type === "照片"
-            ? `<img src="${escapeHtml(state.pet.photo)}" alt="" />`
+          memoryPhoto
+            ? `<img src="${escapeHtml(memoryPhoto)}" alt="" />`
             : `<span>${escapeHtml(getMemoryTypeIcon(memory.type))}</span>`
         }
       </div>
@@ -621,10 +631,6 @@ function renderAlbum() {
       <button class="album-delete" data-delete-album="${item.id}" type="button" aria-label="删除这张照片">删</button>
       <div class="album-card-surface" data-album-surface>
         <img src="${item.src}" alt="相册照片 ${index + 1}" />
-        <div>
-          <h3>${escapeHtml(item.caption || `${state.pet.name} 的照片`)}</h3>
-          <p>Memory ${String(index + 1).padStart(2, "0")}</p>
-        </div>
       </div>
     `;
     grid.appendChild(card);
@@ -669,6 +675,9 @@ function fillMemoryForm(memory) {
   fields.type.value = memory.type;
   fields.body.value = memory.body;
   editingMemoryId = memory.id;
+  $("#memoryPhotoHint").textContent = memory.photo
+    ? "已保存一张照片，重新上传会替换这条记忆的照片。"
+    : "可选。上传后会显示在这条记忆卡片里。";
   $("#memorySubmit").textContent = "保存修改";
   $("#cancelMemoryEdit").classList.remove("hidden");
   setView("memories");
@@ -679,6 +688,8 @@ function resetMemoryForm() {
   form.reset();
   form.elements.date.valueAsDate = new Date();
   editingMemoryId = null;
+  $("#memoryPhotoHint").textContent = "可选。上传后会显示在这条记忆卡片里。";
+  $("#memorySubmit").disabled = false;
   $("#memorySubmit").textContent = "保存记忆";
   $("#cancelMemoryEdit").classList.add("hidden");
 }
@@ -795,8 +806,6 @@ function getMemoryTypeIcon(type) {
   const icons = {
     日常: "记",
     照片: "影",
-    声音: "声",
-    视频: "播",
     纪念日: "念",
   };
   return icons[type] || "记";
@@ -1226,29 +1235,43 @@ function bindEvents() {
     }
   });
 
-  $("#memoryForm").addEventListener("submit", (event) => {
+  $("#memoryForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
     const fields = form.elements;
     const wasEditing = Boolean(editingMemoryId);
-    const memory = {
-      id: editingMemoryId || crypto.randomUUID(),
-      title: fields.title.value.trim(),
-      date: fields.date.value,
-      type: fields.type.value,
-      body: fields.body.value.trim(),
-    };
+    const existingMemory = wasEditing ? state.memories.find((item) => item.id === editingMemoryId) : null;
+    const submitButton = $("#memorySubmit");
+    submitButton.disabled = true;
+    submitButton.textContent = "保存中";
 
-    if (wasEditing) {
-      state.memories = state.memories.map((item) => (item.id === editingMemoryId ? memory : item));
-    } else {
-      state.memories.unshift(memory);
+    try {
+      const photoFile = fields.photo.files?.[0];
+      const memory = {
+        id: editingMemoryId || crypto.randomUUID(),
+        title: fields.title.value.trim(),
+        date: fields.date.value,
+        type: fields.type.value,
+        photo: photoFile ? await fileToDataUrl(photoFile) : existingMemory?.photo || "",
+        body: fields.body.value.trim(),
+      };
+
+      if (wasEditing) {
+        state.memories = state.memories.map((item) => (item.id === editingMemoryId ? memory : item));
+      } else {
+        state.memories.unshift(memory);
+      }
+
+      saveState();
+      resetMemoryForm();
+      renderAll();
+      showToast(wasEditing ? "记忆已更新" : "记忆已保存");
+    } catch (error) {
+      console.error("Memory save failed:", error);
+      showToast("保存失败：图片可能太大，请换一张较小的照片");
+      submitButton.disabled = false;
+      submitButton.textContent = wasEditing ? "保存修改" : "保存记忆";
     }
-
-    saveState();
-    resetMemoryForm();
-    renderAll();
-    showToast(wasEditing ? "记忆已更新" : "记忆已保存");
   });
 
   $("#memoryList").addEventListener("click", (event) => {
@@ -1342,7 +1365,7 @@ function bindEvents() {
       files.map(async (file) => ({
         id: crypto.randomUUID(),
         src: await fileToDataUrl(file),
-        caption: `${state.pet.name} 的新照片`,
+        caption: "",
       })),
     );
 

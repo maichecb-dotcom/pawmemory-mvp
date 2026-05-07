@@ -834,6 +834,13 @@ h3 {
   background: rgba(255, 253, 250, 0.86);
 }
 
+.field-hint {
+  margin: -4px 0 2px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .quick-profile-panel .ghost-button {
   justify-self: stretch;
   min-height: 46px;
@@ -1337,15 +1344,6 @@ select:focus {
 .album-card img {
   display: block;
   aspect-ratio: 4 / 3;
-}
-
-.album-card-surface div {
-  padding: 14px;
-}
-
-.album-card p {
-  margin-bottom: 0;
-  color: var(--muted);
 }
 
 .empty-state {

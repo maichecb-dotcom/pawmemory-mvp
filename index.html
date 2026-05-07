@@ -241,14 +241,17 @@
                 <select name="type">
                   <option>日常</option>
                   <option>照片</option>
-                  <option>声音</option>
-                  <option>视频</option>
                   <option>纪念日</option>
                 </select>
               </label>
               <label>
+                记忆照片
+                <input name="photo" type="file" accept="image/*" />
+              </label>
+              <p class="field-hint" id="memoryPhotoHint">可选。上传后会显示在这条记忆卡片里。</p>
+              <label>
                 记忆内容
-                <textarea name="body" rows="5" required placeholder="写下它当时的动作、声音、表情，越具体越像。"></textarea>
+                <textarea name="body" rows="5" required placeholder="写下它当时的动作、表情和场景，越具体越像。"></textarea>
               </label>
               <div class="button-row">
                 <button class="primary-button" id="memorySubmit" type="submit">保存记忆</button>
@@ -263,8 +266,6 @@
                   <option value="全部">全部类型</option>
                   <option value="日常">日常</option>
                   <option value="照片">照片</option>
-                  <option value="声音">声音</option>
-                  <option value="视频">视频</option>
                   <option value="纪念日">纪念日</option>
                 </select>
               </div>
