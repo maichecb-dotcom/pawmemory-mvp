@@ -694,6 +694,52 @@ function resetMemoryForm() {
   $("#cancelMemoryEdit").classList.add("hidden");
 }
 
+function askSignOutLocalDataChoice() {
+  const dialog = $("#signOutDialog");
+  const cancelButton = $("#cancelSignOut");
+  const keepButton = $("#keepLocalData");
+  const clearButton = $("#clearLocalData");
+
+  return new Promise((resolve) => {
+    const close = (choice) => {
+      dialog.classList.add("hidden");
+      cancelButton.removeEventListener("click", onCancel);
+      keepButton.removeEventListener("click", onKeep);
+      clearButton.removeEventListener("click", onClear);
+      dialog.removeEventListener("click", onBackdropClick);
+      document.removeEventListener("keydown", onKeydown);
+      resolve(choice);
+    };
+    const onCancel = () => close("cancel");
+    const onKeep = () => close("keep");
+    const onClear = () => close("clear");
+    const onBackdropClick = (event) => {
+      if (event.target === dialog) close("cancel");
+    };
+    const onKeydown = (event) => {
+      if (event.key === "Escape") close("cancel");
+    };
+
+    cancelButton.addEventListener("click", onCancel);
+    keepButton.addEventListener("click", onKeep);
+    clearButton.addEventListener("click", onClear);
+    dialog.addEventListener("click", onBackdropClick);
+    document.addEventListener("keydown", onKeydown);
+    dialog.classList.remove("hidden");
+    keepButton.focus();
+  });
+}
+
+function clearLocalAppData() {
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(LOCAL_UPDATED_AT_KEY);
+  state = structuredClone(defaultState);
+  hasLocalState = false;
+  localUpdatedAt = "";
+  cloud.lastSyncedAt = "";
+  renderAll();
+}
+
 function applyProfileDraft(draft) {
   const fields = $("#profileForm").elements;
   const values = {
@@ -1135,11 +1181,27 @@ function bindEvents() {
 
   $("#signOutButton").addEventListener("click", async () => {
     if (!cloud.client) return;
-    await cloud.client.auth.signOut();
-    cloud.user = null;
-    renderAuthState();
-    updateCloudStatus("已退出登录，当前资料只保存在本机", "local");
-    showToast("已退出登录");
+    const choice = await askSignOutLocalDataChoice();
+    if (choice === "cancel") return;
+
+    try {
+      await cloud.client.auth.signOut();
+      cloud.user = null;
+      renderAuthState();
+
+      if (choice === "clear") {
+        clearLocalAppData();
+        updateCloudStatus("已退出登录，本机资料已清除，当前显示演示数据", "local");
+        showToast("已退出登录，本机资料已清除");
+        return;
+      }
+
+      updateCloudStatus("已退出登录，当前资料只保存在本机", "local");
+      showToast("已退出登录，已保留本机资料");
+    } catch (error) {
+      console.error("Sign out failed:", error);
+      showToast("退出失败，请稍后再试");
+    }
   });
 
   $("#cloudSyncNow").addEventListener("click", async () => {

@@ -424,8 +424,23 @@
       </main>
     </div>
 
+    <div class="modal-backdrop hidden" id="signOutDialog" role="dialog" aria-modal="true" aria-labelledby="signOutDialogTitle">
+      <section class="dialog-card">
+        <div class="section-heading">
+          <p class="eyebrow">Sign out</p>
+          <h2 id="signOutDialogTitle">退出后如何处理本机资料？</h2>
+        </div>
+        <p>云端资料会保留在你的账号里。这里选择的只是当前浏览器里已经保存的宠物画像、记忆、相册和聊天记录。</p>
+        <div class="dialog-actions">
+          <button class="ghost-button" id="cancelSignOut" type="button">取消</button>
+          <button class="primary-button" id="keepLocalData" type="button">保留本机资料</button>
+          <button class="danger-button" id="clearLocalData" type="button">清除本机资料</button>
+        </div>
+      </section>
+    </div>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="app.js?v=20260506-cloud-sync"></script>
+    <script src="app.js?v=20260508-signout-dialog"></script>
   </body>
 </html>
