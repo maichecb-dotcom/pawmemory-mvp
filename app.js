@@ -216,6 +216,15 @@ function setAuthLoading(mode = null) {
   signUpButton.textContent = mode === "signup" ? "注册中" : "注册";
 }
 
+function clearAuthFields({ keepEmail = false } = {}) {
+  const emailInput = $("#authEmail");
+  const passwordInput = $("#authPassword");
+  if (!emailInput || !passwordInput) return;
+
+  if (!keepEmail) emailInput.value = "";
+  passwordInput.value = "";
+}
+
 function getAuthRedirectUrl() {
   return `${window.location.origin}${window.location.pathname}`;
 }
@@ -547,7 +556,7 @@ function renderChat() {
 }
 
 function renderFeedbackControls(message) {
-  const selected = state.feedback[message.id];
+  const selected = getFeedbackValue(message.id);
   const options = [
     ["comfort", "舒服"],
     ["unlike", "不像它"],
@@ -585,14 +594,33 @@ function setChatComposerLoading(isLoading) {
   const button = form.querySelector("[data-send-button]");
   button.disabled = isLoading;
   button.classList.toggle("is-loading", isLoading);
-  button.setAttribute("aria-label", isLoading ? "正在回应" : "发送消息");
+  button.setAttribute("aria-label", isLoading ? "它在听你说话" : "发送消息");
+}
+
+function getPetListeningCue(mode = "listen") {
+  const name = state.pet.name || "它";
+  const listenCues = [
+    `${name}轻轻动了动耳朵。`,
+    `${name}安静地看着你。`,
+    `${name}慢慢靠近了一点。`,
+    `${name}眨了眨眼。`,
+    `${name}把尾巴轻轻扫了一下。`,
+    `${name}像是在认真听你说。`,
+  ];
+  const retryCues = [
+    `${name}又轻轻看向你。`,
+    `${name}换了个舒服的姿势。`,
+    `${name}把头靠近了一点。`,
+  ];
+  const cues = mode === "retry" ? retryCues : listenCues;
+  return cues[Math.floor(Math.random() * cues.length)];
 }
 
 function addPendingReply() {
   const pendingMessage = {
     id: crypto.randomUUID(),
     role: "pet",
-    text: `${state.pet.name} 正在想你说的话...`,
+    text: getPetListeningCue(),
     time: "现在",
     pending: true,
   };
@@ -926,6 +954,55 @@ function shortPetReply(lines) {
     .join("");
 }
 
+function getFeedbackValue(messageId) {
+  const feedback = state.feedback[messageId];
+  return typeof feedback === "string" ? feedback : feedback?.value;
+}
+
+function buildReplyFeedback(messageId, value) {
+  const messageIndex = state.chat.findIndex((message) => message.id === messageId);
+  const petMessage = state.chat[messageIndex];
+  const userMessage = [...state.chat]
+    .slice(0, Math.max(messageIndex, 0))
+    .reverse()
+    .find((message) => message.role === "user");
+
+  return {
+    messageId,
+    value,
+    petName: state.pet.name,
+    petReply: petMessage?.text || "",
+    userMessage: userMessage?.text || "",
+    createdAt: new Date().toISOString(),
+  };
+}
+
+async function saveReplyFeedbackToCloud(feedback) {
+  if (!cloud.client || !cloud.user) {
+    return "local";
+  }
+
+  const { error } = await cloud.client.from("reply_feedback").upsert(
+    {
+      user_id: cloud.user.id,
+      message_id: feedback.messageId,
+      feedback_value: feedback.value,
+      pet_name: feedback.petName,
+      user_message: feedback.userMessage,
+      pet_reply: feedback.petReply,
+      created_at: feedback.createdAt,
+    },
+    { onConflict: "user_id,message_id" },
+  );
+
+  if (error) {
+    console.error("Reply feedback sync failed:", error);
+    return "failed";
+  }
+
+  return "synced";
+}
+
 async function getCompanionReply(message) {
   if (window.location.protocol === "file:") {
     return {
@@ -980,7 +1057,7 @@ async function regenerateReply(messageId) {
     message.id === messageId
       ? {
           ...message,
-          text: `${state.pet.name} 正在重新想一想...`,
+          text: getPetListeningCue("retry"),
           pending: true,
         }
       : message,
@@ -1130,6 +1207,7 @@ function bindEvents() {
         showToast(error.message.includes("Invalid") ? "邮箱或密码不正确，或邮箱还未确认" : "登录失败");
         return;
       }
+      clearAuthFields();
       showToast("登录成功，正在同步资料");
     } catch (error) {
       console.error(error);
@@ -1166,8 +1244,10 @@ function bindEvents() {
         return;
       }
       if (data.session) {
+        clearAuthFields();
         showToast("注册成功，正在同步资料");
       } else {
+        clearAuthFields({ keepEmail: true });
         updateCloudStatus("确认邮件已发送，请去邮箱点击确认链接", "syncing");
         showToast("确认邮件已发送，请去邮箱点击链接");
       }
@@ -1188,6 +1268,8 @@ function bindEvents() {
       await cloud.client.auth.signOut();
       cloud.user = null;
       renderAuthState();
+      clearAuthFields();
+      setTimeout(() => clearAuthFields(), 80);
 
       if (choice === "clear") {
         clearLocalAppData();
@@ -1391,7 +1473,7 @@ function bindEvents() {
     }
   });
 
-  $("#chatStream").addEventListener("click", (event) => {
+  $("#chatStream").addEventListener("click", async (event) => {
     const regenerateButton = event.target.closest("[data-regenerate-message]");
     if (regenerateButton) {
       regenerateReply(regenerateButton.dataset.regenerateMessage);
@@ -1403,10 +1485,18 @@ function bindEvents() {
 
     const messageId = feedbackButton.dataset.feedbackMessage;
     const feedbackValue = feedbackButton.dataset.feedbackValue;
-    state.feedback[messageId] = feedbackValue;
+    const feedback = buildReplyFeedback(messageId, feedbackValue);
+    state.feedback[messageId] = feedback;
     saveState();
     renderChat();
-    showToast("已记录反馈");
+    const syncResult = await saveReplyFeedbackToCloud(feedback);
+    if (syncResult === "synced") {
+      showToast("已同步到 AI 回复反馈表");
+    } else if (syncResult === "failed") {
+      showToast("已在本机标记，反馈表未配置或同步失败");
+    } else {
+      showToast("已标记这条回复，当前只保存在本机");
+    }
   });
 
   $("#memorySearch").addEventListener("input", (event) => {
