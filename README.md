@@ -12,6 +12,18 @@ https://unrivaled-licorice-4881b7.netlify.app/
 
 `/Users/tianye/Documents/New project/index.html`
 
+如果要像正式服务器一样在本地运行：
+
+```bash
+npm start
+```
+
+然后打开：
+
+```text
+http://127.0.0.1:3000
+```
+
 ## 当前功能
 
 - 首页纪念仪表盘
@@ -91,6 +103,17 @@ https://platform.deepseek.com/api_keys
 AI 接口在 Vercel 上的路径是：
 
 `/api/chat`
+
+## 腾讯云服务器部署准备
+
+项目已经新增普通 Node 服务器入口，方便后续迁移到腾讯云轻量应用服务器：
+
+- `server.js`：同时提供静态页面和 `/api/chat`、`/api/profile`、`/api/config`
+- `package.json`：包含 `npm start` 和 `npm run check`
+- `.env.example`：服务器环境变量模板
+- `TENCENT_CLOUD_MIGRATION.md`：小白版迁移准备清单
+
+第一阶段迁移建议仍然临时使用 Supabase 做登录和云端资料，只把前端和 API 先放到腾讯云，降低一次性迁移风险。
 
 ## 登录与云端同步
 
